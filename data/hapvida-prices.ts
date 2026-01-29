@@ -49,15 +49,119 @@ export type City =
   | "sorocaba"
   | "americana";
 
-export const CITIES: { id: City; name: string; state: string }[] = [
-  { id: "sao-paulo", name: "São Paulo", state: "SP" },
-  { id: "campinas", name: "Campinas", state: "SP" },
-  { id: "jundiai", name: "Jundiaí", state: "SP" },
-  { id: "mogi-das-cruzes", name: "Mogi das Cruzes", state: "SP" },
-  { id: "santos", name: "Santos", state: "SP" },
-  { id: "sao-bernardo", name: "São Bernardo do Campo", state: "SP" },
-  { id: "sorocaba", name: "Sorocaba", state: "SP" },
-  { id: "americana", name: "Americana", state: "SP" },
+export interface CityInfo {
+  id: City;
+  name: string;
+  state: string;
+  commercializationArea: string[];
+}
+
+export const CITIES: CityInfo[] = [
+  { 
+    id: "sao-paulo", 
+    name: "Filial São Paulo", 
+    state: "SP",
+    commercializationArea: [
+      "São Paulo Capital",
+      "Guarulhos",
+      "Osasco",
+      "Taboão da Serra",
+      "Barueri",
+      "Carapicuíba",
+      "Itapevi",
+      "Cotia",
+      "Embu das Artes",
+      "Diadema",
+      "São Caetano do Sul",
+    ]
+  },
+  { 
+    id: "campinas", 
+    name: "Filial Campinas", 
+    state: "SP",
+    commercializationArea: [
+      "Campinas",
+      "Valinhos",
+      "Vinhedo",
+      "Sumaré",
+      "Hortolândia",
+      "Indaiatuba",
+      "Paulínia",
+    ]
+  },
+  { 
+    id: "jundiai", 
+    name: "Filial Jundiaí", 
+    state: "SP",
+    commercializationArea: [
+      "Jundiaí",
+      "Várzea Paulista",
+      "Campo Limpo Paulista",
+      "Itupeva",
+      "Louveira",
+    ]
+  },
+  { 
+    id: "mogi-das-cruzes", 
+    name: "Filial Mogi das Cruzes", 
+    state: "SP",
+    commercializationArea: [
+      "Mogi das Cruzes",
+      "Suzano",
+      "Itaquaquecetuba",
+      "Poá",
+      "Ferraz de Vasconcelos",
+      "Arujá",
+    ]
+  },
+  { 
+    id: "santos", 
+    name: "Filial Santos", 
+    state: "SP",
+    commercializationArea: [
+      "Santos",
+      "São Vicente",
+      "Guarujá",
+      "Praia Grande",
+      "Cubatão",
+    ]
+  },
+  { 
+    id: "sao-bernardo", 
+    name: "Filial São Bernardo do Campo", 
+    state: "SP",
+    commercializationArea: [
+      "São Bernardo do Campo",
+      "Santo André",
+      "Mauá",
+      "Ribeirão Pires",
+      "Rio Grande da Serra",
+    ]
+  },
+  { 
+    id: "sorocaba", 
+    name: "Filial Sorocaba", 
+    state: "SP",
+    commercializationArea: [
+      "Sorocaba",
+      "Votorantim",
+      "Itu",
+      "Salto",
+      "Mairinque",
+    ]
+  },
+  { 
+    id: "americana", 
+    name: "Filial Americana", 
+    state: "SP",
+    commercializationArea: [
+      "Americana",
+      "Santa Bárbara d'Oeste",
+      "Nova Odessa",
+      "Limeira",
+      "Piracicaba",
+    ]
+  },
 ];
 
 export type ContractType = 

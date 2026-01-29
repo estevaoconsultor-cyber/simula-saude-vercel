@@ -33,7 +33,16 @@ export default function TabLayout() {
         options={{
           title: "Simulador",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+            <IconSymbol size={26} name="house.fill" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="rules"
+        options={{
+          title: "Regras",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="book.fill" color={color} />
           ),
         }}
       />
@@ -42,7 +51,16 @@ export default function TabLayout() {
         options={{
           title: "Rede",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="building.2.fill" color={color} />
+            <IconSymbol size={26} name="building.2.fill" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="contact"
+        options={{
+          title: "Contato",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="phone.fill" color={color} />
           ),
         }}
       />

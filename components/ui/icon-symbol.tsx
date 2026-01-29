@@ -21,6 +21,11 @@ const MAPPING = {
   "person.fill": "person",
   "doc.text.fill": "description",
   "magnifyingglass": "search",
+  "book.fill": "menu-book",
+  "phone.fill": "phone",
+  "message.fill": "chat",
+  "questionmark.circle.fill": "help",
+  "gearshape.fill": "settings",
 } as IconMapping;
 
 /**

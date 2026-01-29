@@ -16,29 +16,41 @@
 - [x] Gerar logo personalizado do app
 - [x] Configurar app.config.ts com branding
 
-## Fase 2 - Integração Hapvida (Concluída)
-- [x] Analisar tabelas de preços da Hapvida (PME, Super Simples, etc.)
-- [x] Extrair dados de rede de atendimento (própria e credenciada)
-- [x] Reestruturar fluxo: cidade → perfil → produtos
-- [x] Implementar seleção de cidade como primeiro passo
-- [x] Criar seleção de tipo de contrato (Super Simples, PME)
-- [x] Criar seleção de coparticipação (Parcial, Total)
-- [x] Desenvolver tabela de simulação com coluna de idades e quantidades
-- [x] Implementar comparativo entre múltiplos produtos simultaneamente
-- [x] Adicionar aba de rede de atendimento por produto
-- [x] Integrar dados reais das tabelas Hapvida (São Paulo)
-- [x] Criar testes unitários para validar cálculos
+## Fase 2 - Simulador Hapvida (Concluída)
+- [x] Analisar tabelas de preços da Hapvida (PDFs e Excel)
+- [x] Extrair dados de preços por cidade e produto
+- [x] Implementar novo fluxo: cidade → contrato → coparticipação
+- [x] Criar tela de seleção de cidade
+- [x] Criar tela de seleção de tipo de contrato
+- [x] Criar tela de seleção de coparticipação
+- [x] Implementar tabela de distribuição de vidas por faixa etária
+- [x] Criar comparativo de valores entre produtos
+- [x] Adicionar aba de rede de atendimento
+- [x] Integrar dados de rede própria e credenciada
 
-## Próximas Melhorias (Pendente)
-- [ ] Adicionar mais cidades com tabelas específicas
-- [ ] Implementar exportação de simulação em PDF
-- [ ] Adicionar filtros de busca na rede de atendimento
-- [ ] Implementar histórico de simulações
-- [ ] Adicionar modo offline com cache de dados
-
-## Fase 3 - Integração Rede de Atendimento Completa (Em Andamento)
+## Fase 3 - Integração Rede de Atendimento (Concluída)
 - [x] Processar arquivos Excel da rede de atendimento (ZIP)
 - [x] Extrair dados de prestadores por produto
 - [x] Criar estrutura de dados da rede no app
 - [x] Implementar filtros por cidade, especialidade e tipo
 - [x] Vincular rede ao produto selecionado na simulação
+
+## Fase 4 - Aba Falar com o Gestor (Em Andamento)
+- [x] Criar aba "Falar com o Gestor" com contatos da equipe
+- [x] Adicionar contatos: Estevão, Laís, Pablo, Jonathan, Agatha
+- [x] Implementar botões de WhatsApp e E-mail direto
+- [x] Processar planilha de 11.807 corretores e gestores
+- [x] Criar busca "Descubra seu Gestor" por CNPJ/código/razão social
+- [x] Exibir dados de contato do gestor encontrado
+
+## Fase 5 - Modificações dos Vídeos (Pendente)
+- [x] Trocar "Cidade" por "Filial de Tabela" (Filial São Paulo, etc.)
+- [x] Adicionar área de comercialização abaixo de cada filial
+- [x] Adicionar tag de Documentações junto com coparticipação
+- [x] Separar documentação: CNPJ vs Vidas
+- [x] Adicionar colunas Titular/Dependente na simulação
+- [x] Mostrar detalhamento de TODOS os produtos selecionados
+- [x] Criar quiz "Descubra sua Tabela" com 5+ perguntas
+- [x] Criar aba "Regras" no menu com tópicos comerciais
+- [x] Separar rede em Própria e Credenciada com seleção de produto
+- [x] Mostrar serviços disponíveis em cada prestador
