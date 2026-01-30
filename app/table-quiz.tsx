@@ -277,9 +277,24 @@ export default function TableQuizScreen() {
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         {/* Header */}
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-primary">← Voltar</Text>
-        </TouchableOpacity>
+        <View className="flex-row items-center justify-between mb-4">
+          <TouchableOpacity 
+            onPress={() => {
+              if (currentQuestion > 0) {
+                setCurrentQuestion(currentQuestion - 1);
+              } else {
+                router.back();
+              }
+            }}
+          >
+            <Text className="text-primary">← {currentQuestion > 0 ? "Pergunta Anterior" : "Sair"}</Text>
+          </TouchableOpacity>
+          {currentQuestion > 0 && (
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text className="text-muted">Sair do Quiz</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         <Text className="text-2xl font-bold text-foreground mb-2">
           Descubra sua Tabela

@@ -62,3 +62,9 @@
 - [x] Recortar foto circular da Agatha Sakamoto
 - [x] Recortar foto circular do Estevão Cardoso
 - [x] Atualizar aba de contatos com as fotos
+
+## Fase 7 - Correções e Melhorias
+- [x] Quiz: Adicionar botão voltar para pergunta anterior (não ao início)
+- [x] Distribuição de vidas: Mostrar quantidade (0,1,2,3) entre botões - e +
+- [x] Distribuição de vidas: Permitir mescla de produtos por vida
+- [x] Nova Simulação: Zerar orçamento sem voltar ao início
