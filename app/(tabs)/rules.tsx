@@ -144,6 +144,27 @@ const RULES: RuleSection[] = [
       },
     ],
   },
+  // NOVO: Manuais Comerciais
+  {
+    id: "manuais",
+    title: "Manuais Comerciais",
+    icon: "📖",
+    content: [
+      "Baixe os manuais e guias para auxiliar suas vendas:",
+    ],
+    downloadable: [
+      { name: "Manual APP do Beneficiário", filename: "0.ManualAPPdoBeneficiário.pdf", description: "Como usar o app do beneficiário" },
+      { name: "Manual do Corretor Super Simples e PME", filename: "1.ManualdoCorretorSuperSimplesePME.pdf", description: "Guia completo para vendas SS e PME" },
+      { name: "Guia Prático App Vendedor", filename: "2.GuiaPráticoAppVendedor(a).pdf", description: "Como usar o app do vendedor" },
+      { name: "Manual Portal Web Vendedor", filename: "2.1ManualPortalWebVendedor.pdf", description: "Acesso e uso do portal web" },
+      { name: "Manual Portal do Cliente", filename: "3.ManualPortaldoCliente.pdf", description: "Portal de atendimento ao cliente" },
+      { name: "Portal Corretor CNPJ/PF", filename: "4.PortalCorretorCNPJPF.pdf", description: "Cadastro e gestão de corretores" },
+      { name: "Manual App e Portal", filename: "5.ManualAppePortal.pdf", description: "Guia geral de apps e portais" },
+      { name: "Manual de Movimentação PF", filename: "7.ManualdemovimentaçãoparacontratosPF.pdf", description: "Inclusões, exclusões e alterações PF" },
+      { name: "Guia Trilha de Vendas Hapvida", filename: "8.GuiaTrilhadeVendasHapvida.pdf", description: "Passo a passo do processo de vendas" },
+      { name: "Manual de Reembolso", filename: "9.ManualdeReembolso-APPePortal.pdf", description: "Como solicitar reembolso" },
+    ],
+  },
   // NOVO: Documentos Importantes
   {
     id: "documentos",
@@ -518,19 +539,19 @@ export default function RulesScreen() {
             <Text className="text-success text-center text-xs font-medium">🔄 Operadoras</Text>
           </TouchableOpacity>
           <TouchableOpacity 
+            onPress={() => setExpandedSection("manuais")}
+            className="flex-1 bg-primary/10 rounded-xl p-3 border border-primary/30"
+          >
+            <Text className="text-primary text-center text-xs font-medium">📖 Manuais</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
             onPress={() => {
               setExpandedSection("plano-vendedor");
               setExpandedSubsection("descontos-fatura");
             }}
-            className="flex-1 bg-primary/10 rounded-xl p-3 border border-primary/30"
-          >
-            <Text className="text-primary text-center text-xs font-medium">🎁 Descontos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            onPress={() => setExpandedSection("documentos")}
             className="flex-1 bg-warning/10 rounded-xl p-3 border border-warning/30"
           >
-            <Text className="text-warning text-center text-xs font-medium">📁 Docs</Text>
+            <Text className="text-warning text-center text-xs font-medium">🎁 Descontos</Text>
           </TouchableOpacity>
         </View>
 

@@ -126,7 +126,7 @@
 - [ ] Corrigir nome Infinity → Infinity 1000.1
 - [ ] Adicionar Smart Ambulatorial na Rede Própria
 - [ ] Adicionar Smart Prime na Rede Própria (unificar todas planilhas)
-- [ ] Atualizar dados de rede no app
+- [x] Atualizar dados de rede no app
 - [ ] Criar estrutura hierárquica de contatos (5 equipes)
 - [ ] Adicionar equipe Camila Foiadelli (Gerente Sênior)
 - [ ] Adicionar equipe Leonardo Dias Mariano (Gerente Sênior)
@@ -136,7 +136,14 @@
 
 ## Fase 14 - Melhorias Solicitadas
 - [x] Remover fotos dos executivos (padronizar ícones)
-- [ ] Adicionar Manuais Comerciais em Regras (com download)
+- [x] Adicionar Manuais Comerciais em Regras (com download)
 - [x] Adicionar Documentos Importantes em Regras (Carta de Responsabilidade, Contrato)
 - [x] Adicionar lista de Operadoras para Aproveitamento de Carência
 - [x] Adicionar informações do Plano do Vendedor
+
+## Fase 15 - Testes e Atualizações
+- [x] Executar testes automatizados do app (61 testes passando)
+- [x] Processar planilhas de rede de atendimento (24.390 prestadores)
+- [x] Adicionar 10 manuais comerciais para download
+- [x] Atualizar dados de rede no app
+- [x] Validar todas as funcionalidades
