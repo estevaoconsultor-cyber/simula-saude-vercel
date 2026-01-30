@@ -86,3 +86,22 @@
 - [x] Rede: Adicionar filtro por Estado
 - [x] Rede: Adicionar filtro por Cidade
 - [x] Rede: Adicionar filtro por Bairro
+
+## Fase 9 - Editor de Foto do Executivo
+- [x] Criar componente de editor de foto com recorte circular
+- [x] Implementar seleção de foto da galeria
+- [x] Implementar controle de zoom (expandir/diminuir)
+- [x] Implementar controle de posição (mover foto)
+- [x] Visualização em tempo real do recorte circular
+- [x] Salvar foto recortada automaticamente
+- [x] Adicionar botão "Editar Foto" na aba de contatos
+
+## Fase 10 - Sistema de Contas de Executivos
+- [x] Criar tabela no banco de dados para executivos
+- [x] Criar aba "Conta" no menu principal
+- [x] Implementar tela de cadastro (nome, WhatsApp, e-mail)
+- [x] Implementar edição de perfil próprio
+- [x] Implementar upload e edição de foto do perfil
+- [x] Implementar busca de executivos cadastrados
+- [ ] Configurar envio de e-mail ao receber novo cadastro
+- [x] Integrar com aba de contatos existente

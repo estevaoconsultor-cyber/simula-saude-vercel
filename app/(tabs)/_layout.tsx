@@ -64,6 +64,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: "Conta",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="person.circle.fill" color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

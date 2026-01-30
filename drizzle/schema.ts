@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -25,4 +25,33 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+/**
+ * Tabela de executivos/corretores
+ * Cada executivo pode criar sua conta e editar seu próprio perfil
+ */
+export const executives = mysqlTable("executives", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Referência ao usuário autenticado (opcional - pode ser null para cadastros pendentes) */
+  userId: int("userId"),
+  /** Nome completo do executivo */
+  name: varchar("name", { length: 255 }).notNull(),
+  /** Cargo/função */
+  role: varchar("role", { length: 100 }),
+  /** Número do WhatsApp */
+  whatsapp: varchar("whatsapp", { length: 20 }),
+  /** E-mail de contato */
+  email: varchar("email", { length: 320 }),
+  /** URL da foto de perfil */
+  photoUrl: text("photoUrl"),
+  /** Código do corretor na Hapvida */
+  brokerCode: varchar("brokerCode", { length: 50 }),
+  /** Status do cadastro: pending (aguardando aprovação), approved, rejected */
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  /** Se o executivo está ativo e visível para busca */
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Executive = typeof executives.$inferSelect;
+export type InsertExecutive = typeof executives.$inferInsert;

@@ -26,6 +26,7 @@ const MAPPING = {
   "message.fill": "chat",
   "questionmark.circle.fill": "help",
   "gearshape.fill": "settings",
+  "person.circle.fill": "account-circle",
 } as IconMapping;
 
 /**

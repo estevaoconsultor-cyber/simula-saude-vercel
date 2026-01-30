@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ScrollView,
   Text,
@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   MANAGERS,
   searchBroker,
@@ -27,7 +28,21 @@ const MANAGER_PHOTOS: Record<string, any> = {
   "Agatha Sakamoto": require("@/assets/images/managers/agatha.png"),
 };
 
-type TabType = "team" | "search";
+// Chave para armazenar executivos cadastrados localmente
+const REGISTERED_EXECUTIVES_KEY = "@registered_executives";
+
+interface RegisteredExecutive {
+  id: string;
+  name: string;
+  role: string;
+  whatsapp: string;
+  email: string;
+  photoUrl: string;
+  brokerCode: string;
+  createdAt: string;
+}
+
+type TabType = "team" | "search" | "executives";
 
 export default function ContactScreen() {
   const colors = useColors();
@@ -35,6 +50,43 @@ export default function ContactScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Broker[]>([]);
   const [selectedBroker, setSelectedBroker] = useState<Broker | null>(null);
+  
+  // Estados para executivos cadastrados
+  const [executiveSearchQuery, setExecutiveSearchQuery] = useState("");
+  const [registeredExecutives, setRegisteredExecutives] = useState<RegisteredExecutive[]>([]);
+  const [filteredExecutives, setFilteredExecutives] = useState<RegisteredExecutive[]>([]);
+
+  // Carregar executivos cadastrados
+  useEffect(() => {
+    loadRegisteredExecutives();
+  }, []);
+
+  // Filtrar executivos quando a busca mudar
+  useEffect(() => {
+    if (executiveSearchQuery.length >= 2) {
+      const query = executiveSearchQuery.toLowerCase();
+      const filtered = registeredExecutives.filter(
+        (exec) =>
+          exec.name.toLowerCase().includes(query) ||
+          exec.email?.toLowerCase().includes(query) ||
+          exec.brokerCode?.toLowerCase().includes(query)
+      );
+      setFilteredExecutives(filtered);
+    } else {
+      setFilteredExecutives(registeredExecutives);
+    }
+  }, [executiveSearchQuery, registeredExecutives]);
+
+  const loadRegisteredExecutives = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(REGISTERED_EXECUTIVES_KEY);
+      if (stored) {
+        setRegisteredExecutives(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error("Erro ao carregar executivos:", error);
+    }
+  };
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -48,10 +100,12 @@ export default function ContactScreen() {
   };
 
   const openWhatsApp = (phone: string, name: string) => {
+    const cleanPhone = phone.replace(/\D/g, "");
+    const formattedPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
     const message = encodeURIComponent(
       `Olá ${name}, sou corretor Hapvida e gostaria de falar com você.`
     );
-    Linking.openURL(`https://wa.me/${phone}?text=${message}`);
+    Linking.openURL(`https://wa.me/${formattedPhone}?text=${message}`);
   };
 
   const openEmail = (email: string, name: string) => {
@@ -101,6 +155,115 @@ export default function ContactScreen() {
           <Text className="text-white font-medium">✉️ E-mail</Text>
         </TouchableOpacity>
       </View>
+    </View>
+  );
+
+  const renderExecutiveCard = (executive: RegisteredExecutive) => (
+    <View
+      key={executive.id}
+      className="bg-surface rounded-xl border border-border p-4 mb-3"
+    >
+      <View className="flex-row items-center mb-3">
+        <View className="w-14 h-14 rounded-full bg-primary/20 items-center justify-center mr-3 overflow-hidden">
+          {executive.photoUrl ? (
+            <Image
+              source={{ uri: executive.photoUrl }}
+              className="w-14 h-14 rounded-full"
+              resizeMode="cover"
+            />
+          ) : (
+            <Text className="text-2xl">👤</Text>
+          )}
+        </View>
+        <View className="flex-1">
+          <Text className="text-base font-semibold text-foreground">
+            {executive.name}
+          </Text>
+          {executive.role && (
+            <Text className="text-sm text-primary">{executive.role}</Text>
+          )}
+          {executive.brokerCode && (
+            <Text className="text-xs text-muted">Código: {executive.brokerCode}</Text>
+          )}
+        </View>
+      </View>
+
+      <View className="flex-row gap-2">
+        {executive.whatsapp && (
+          <TouchableOpacity
+            onPress={() => openWhatsApp(executive.whatsapp, executive.name)}
+            className="flex-1 bg-success py-3 rounded-lg flex-row items-center justify-center"
+            style={{ opacity: 1 }}
+          >
+            <Text className="text-white font-medium">📱 WhatsApp</Text>
+          </TouchableOpacity>
+        )}
+
+        {executive.email && (
+          <TouchableOpacity
+            onPress={() => openEmail(executive.email, executive.name)}
+            className="flex-1 bg-primary py-3 rounded-lg flex-row items-center justify-center"
+            style={{ opacity: 1 }}
+          >
+            <Text className="text-white font-medium">✉️ E-mail</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderExecutivesTab = () => (
+    <View className="flex-1">
+      <View className="bg-primary/10 rounded-xl p-4 mb-4">
+        <Text className="text-base font-semibold text-primary mb-2">
+          👥 Executivos Cadastrados
+        </Text>
+        <Text className="text-sm text-muted">
+          Busque executivos e corretores que se cadastraram no app.
+        </Text>
+      </View>
+
+      <View className="bg-surface rounded-xl border border-border flex-row items-center px-3 mb-4">
+        <Text className="text-lg mr-2">🔍</Text>
+        <TextInput
+          placeholder="Buscar por nome, e-mail ou código..."
+          placeholderTextColor={colors.muted}
+          value={executiveSearchQuery}
+          onChangeText={setExecutiveSearchQuery}
+          className="flex-1 py-3 text-foreground"
+          style={{ color: colors.foreground }}
+          returnKeyType="search"
+        />
+        {executiveSearchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setExecutiveSearchQuery("")}>
+            <Text className="text-muted text-lg">✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {filteredExecutives.length > 0 ? (
+        <>
+          <Text className="text-sm text-muted mb-2">
+            {filteredExecutives.length} executivo(s) encontrado(s)
+          </Text>
+          {filteredExecutives.map((executive) => renderExecutiveCard(executive))}
+        </>
+      ) : registeredExecutives.length === 0 ? (
+        <View className="items-center py-8">
+          <Text className="text-4xl mb-2">👥</Text>
+          <Text className="text-muted text-center">
+            Nenhum executivo cadastrado ainda.{"\n"}
+            Cadastre-se na aba "Conta" para aparecer aqui.
+          </Text>
+        </View>
+      ) : (
+        <View className="items-center py-8">
+          <Text className="text-4xl mb-2">🔍</Text>
+          <Text className="text-muted text-center">
+            Nenhum executivo encontrado com essa busca.
+          </Text>
+        </View>
+      )}
     </View>
   );
 
@@ -282,11 +445,11 @@ export default function ContactScreen() {
           }`}
         >
           <Text
-            className={`text-center font-medium ${
+            className={`text-center font-medium text-xs ${
               activeTab === "team" ? "text-white" : "text-muted"
             }`}
           >
-            Equipe Comercial
+            Equipe
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -296,11 +459,25 @@ export default function ContactScreen() {
           }`}
         >
           <Text
-            className={`text-center font-medium ${
+            className={`text-center font-medium text-xs ${
               activeTab === "search" ? "text-white" : "text-muted"
             }`}
           >
-            Descubra seu Gestor
+            Meu Gestor
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setActiveTab("executives")}
+          className={`flex-1 py-2 rounded-lg ${
+            activeTab === "executives" ? "bg-primary" : ""
+          }`}
+        >
+          <Text
+            className={`text-center font-medium text-xs ${
+              activeTab === "executives" ? "text-white" : "text-muted"
+            }`}
+          >
+            Executivos
           </Text>
         </TouchableOpacity>
       </View>
@@ -328,8 +505,10 @@ export default function ContactScreen() {
               (manager, index) => renderManagerCard(manager, index)
             )}
           </>
-        ) : (
+        ) : activeTab === "search" ? (
           renderSearchTab()
+        ) : (
+          renderExecutivesTab()
         )}
       </ScrollView>
     </ScreenContainer>

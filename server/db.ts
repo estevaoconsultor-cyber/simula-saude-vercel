@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, executives, InsertExecutive, Executive } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,135 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ==================== EXECUTIVES ====================
+
+/**
+ * Criar novo executivo (cadastro)
+ */
+export async function createExecutive(data: InsertExecutive): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(executives).values(data);
+  return Number(result[0].insertId);
+}
+
+/**
+ * Buscar executivo por ID
+ */
+export async function getExecutiveById(id: number): Promise<Executive | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(executives).where(eq(executives.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Buscar executivo por userId (usuário logado)
+ */
+export async function getExecutiveByUserId(userId: number): Promise<Executive | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(executives).where(eq(executives.userId, userId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Buscar executivos por nome (busca parcial)
+ */
+export async function searchExecutives(query: string): Promise<Executive[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const searchPattern = `%${query}%`;
+  const result = await db
+    .select()
+    .from(executives)
+    .where(
+      or(
+        like(executives.name, searchPattern),
+        like(executives.email, searchPattern),
+        like(executives.brokerCode, searchPattern)
+      )
+    )
+    .limit(20);
+
+  return result;
+}
+
+/**
+ * Listar todos os executivos aprovados e ativos
+ */
+export async function listApprovedExecutives(): Promise<Executive[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(executives)
+    .where(eq(executives.status, "approved"))
+    .limit(100);
+
+  return result.filter((e) => e.isActive);
+}
+
+/**
+ * Listar executivos pendentes de aprovação (para admin)
+ */
+export async function listPendingExecutives(): Promise<Executive[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(executives)
+    .where(eq(executives.status, "pending"))
+    .limit(100);
+
+  return result;
+}
+
+/**
+ * Atualizar dados do executivo
+ */
+export async function updateExecutive(
+  id: number,
+  data: Partial<InsertExecutive>
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(executives).set(data).where(eq(executives.id, id));
+}
+
+/**
+ * Aprovar cadastro do executivo
+ */
+export async function approveExecutive(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(executives).set({ status: "approved" }).where(eq(executives.id, id));
+}
+
+/**
+ * Rejeitar cadastro do executivo
+ */
+export async function rejectExecutive(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(executives).set({ status: "rejected" }).where(eq(executives.id, id));
+}
+
+/**
+ * Vincular executivo a um usuário autenticado
+ */
+export async function linkExecutiveToUser(executiveId: number, userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(executives).set({ userId }).where(eq(executives.id, executiveId));
+}
