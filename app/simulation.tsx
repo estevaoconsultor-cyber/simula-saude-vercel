@@ -12,6 +12,8 @@ import {
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
 import { ScreenContainer } from "@/components/screen-container";
 import { useSimulation } from "@/contexts/SimulationContext";
 import {
@@ -46,6 +48,12 @@ interface SavedSimulation {
   grandTotal: number;
 }
 
+// Contador de quantidade por produto no modal
+interface ProductQuantity {
+  productId: string;
+  quantity: number;
+}
+
 const STORAGE_KEY = "@hapvida_saved_simulations";
 
 export default function SimulationScreen() {
@@ -62,12 +70,15 @@ export default function SimulationScreen() {
   // Estado para vidas com produto específico
   const [lives, setLives] = useState<LiveEntry[]>([]);
   
-  // Modal para selecionar produto
+  // Modal para selecionar produto com quantidade
   const [showProductModal, setShowProductModal] = useState(false);
   const [pendingEntry, setPendingEntry] = useState<{
     type: LiveType;
     ageRange: AgeRange;
   } | null>(null);
+  
+  // Estado para quantidades no modal
+  const [productQuantities, setProductQuantities] = useState<ProductQuantity[]>([]);
 
   // Modal para editar vida específica
   const [showEditModal, setShowEditModal] = useState(false);
@@ -81,6 +92,9 @@ export default function SimulationScreen() {
   // Modal para ver simulações salvas
   const [showSavedModal, setShowSavedModal] = useState(false);
   const [savedSimulations, setSavedSimulations] = useState<SavedSimulation[]>([]);
+  
+  // Estado de loading para PDF
+  const [isExporting, setIsExporting] = useState(false);
 
   const selectedCity = CITIES.find((c) => c.id === state.city);
   const selectedContract = CONTRACT_TYPES.find((c) => c.id === state.contractType);
@@ -122,29 +136,67 @@ export default function SimulationScreen() {
     return lives.filter(l => l.ageRange === ageRange && l.type === type).length;
   };
 
-  // Adicionar vida com seleção de produto
+  // Abrir modal com quantidades zeradas
   const handleAddLife = (ageRange: AgeRange, type: LiveType) => {
     setPendingEntry({ type, ageRange });
+    // Inicializar quantidades zeradas para todos os produtos
+    setProductQuantities(availableProducts.map(p => ({ productId: p.id, quantity: 0 })));
     setShowProductModal(true);
   };
 
-  // Confirmar adição com produto selecionado
-  const confirmAddLife = (productId: string) => {
-    if (pendingEntry) {
-      const newEntry: LiveEntry = {
-        id: `${Date.now()}-${Math.random()}`,
-        type: pendingEntry.type,
-        ageRange: pendingEntry.ageRange,
-        productId,
-      };
-      setLives(prev => [...prev, newEntry]);
-      
-      const totalForRange = getLivesCount(pendingEntry.ageRange, "titular") + 
-                           getLivesCount(pendingEntry.ageRange, "dependente") + 1;
-      dispatch({ type: "SET_LIVES", payload: { ageRange: pendingEntry.ageRange, count: totalForRange } });
+  // Atualizar quantidade de um produto no modal
+  const updateProductQuantity = (productId: string, delta: number) => {
+    setProductQuantities(prev => prev.map(pq => {
+      if (pq.productId === productId) {
+        const newQty = Math.max(0, pq.quantity + delta);
+        return { ...pq, quantity: newQty };
+      }
+      return pq;
+    }));
+  };
+
+  // Obter quantidade de um produto
+  const getProductQuantity = (productId: string) => {
+    return productQuantities.find(pq => pq.productId === productId)?.quantity || 0;
+  };
+
+  // Total de vidas selecionadas no modal
+  const getTotalSelectedInModal = () => {
+    return productQuantities.reduce((sum, pq) => sum + pq.quantity, 0);
+  };
+
+  // Confirmar adição de múltiplas vidas
+  const confirmAddLives = () => {
+    if (!pendingEntry) return;
+    
+    const totalSelected = getTotalSelectedInModal();
+    if (totalSelected === 0) {
+      Alert.alert("Atenção", "Selecione pelo menos uma vida para adicionar.");
+      return;
     }
+
+    const newLives: LiveEntry[] = [];
+    productQuantities.forEach(pq => {
+      for (let i = 0; i < pq.quantity; i++) {
+        newLives.push({
+          id: `${Date.now()}-${Math.random()}-${i}`,
+          type: pendingEntry.type,
+          ageRange: pendingEntry.ageRange,
+          productId: pq.productId,
+        });
+      }
+    });
+
+    setLives(prev => [...prev, ...newLives]);
+    
+    // Atualizar contagem total para a faixa
+    const totalForRange = getLivesCount(pendingEntry.ageRange, "titular") + 
+                         getLivesCount(pendingEntry.ageRange, "dependente") + totalSelected;
+    dispatch({ type: "SET_LIVES", payload: { ageRange: pendingEntry.ageRange, count: totalForRange } });
+
     setShowProductModal(false);
     setPendingEntry(null);
+    setProductQuantities([]);
   };
 
   // Remover última vida de uma faixa/tipo
@@ -248,28 +300,7 @@ export default function SimulationScreen() {
     }
   };
 
-  // Exportar PDF (abre compartilhamento)
-  const handleExportPDF = () => {
-    // Gerar conteúdo HTML para PDF
-    const htmlContent = generatePDFContent();
-    
-    // Em ambiente web, abre em nova aba para impressão
-    if (Platform.OS === "web") {
-      const printWindow = window.open("", "_blank");
-      if (printWindow) {
-        printWindow.document.write(htmlContent);
-        printWindow.document.close();
-        printWindow.print();
-      }
-    } else {
-      Alert.alert(
-        "Exportar PDF",
-        "Para exportar o PDF, use a opção de compartilhamento do seu dispositivo.",
-        [{ text: "OK" }]
-      );
-    }
-  };
-
+  // Gerar conteúdo HTML para PDF
   const generatePDFContent = () => {
     const cityName = selectedCity?.name || "";
     const contractName = selectedContract?.name || "";
@@ -279,9 +310,9 @@ export default function SimulationScreen() {
     productTotals.forEach(({ product, total, lives: productLives }) => {
       productsHTML += `
         <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #eee;">${product.name}</td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${productLives.length}</td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${formatCurrency(total)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${product.name}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${productLives.length}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">R$ ${total.toFixed(2).replace('.', ',')}</td>
         </tr>
       `;
     });
@@ -291,50 +322,64 @@ export default function SimulationScreen() {
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>Proposta Hapvida - ${companyName || "Cliente"}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Proposta Hapvida</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
-          .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #FF6B00; padding-bottom: 20px; }
-          .logo { max-width: 250px; margin-bottom: 15px; }
-          .tagline { background: linear-gradient(135deg, #FF6B00, #0066CC); color: white; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: center; }
-          .tagline h2 { margin: 0; font-size: 18px; }
-          .tagline p { margin: 5px 0 0; font-size: 14px; }
-          .info-box { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 15px 0; }
-          .info-row { display: flex; justify-content: space-between; margin: 5px 0; }
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; color: #333; font-size: 14px; }
+          .header { text-align: center; margin-bottom: 25px; border-bottom: 3px solid #FF6B00; padding-bottom: 15px; }
+          .logo-text { font-size: 28px; font-weight: bold; color: #0066CC; margin-bottom: 5px; }
+          .logo-sub { font-size: 12px; color: #666; }
+          .tagline { background: linear-gradient(135deg, #FF6B00, #0066CC); color: white; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: center; }
+          .tagline h2 { margin: 0; font-size: 16px; font-weight: 600; }
+          .tagline p { margin: 5px 0 0; font-size: 12px; opacity: 0.9; }
+          .company-name { font-size: 18px; font-weight: bold; color: #333; margin: 15px 0 5px; }
+          .date-info { font-size: 13px; color: #666; margin-bottom: 15px; }
+          .info-box { background: #f8f9fa; padding: 12px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #0066CC; }
+          .info-row { display: flex; justify-content: space-between; margin: 6px 0; font-size: 13px; }
+          .info-label { color: #666; }
+          .info-value { font-weight: 600; color: #333; }
           table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-          th { background: #0066CC; color: white; padding: 10px; text-align: left; }
+          th { background: #0066CC; color: white; padding: 12px 10px; text-align: left; font-size: 13px; }
+          th:nth-child(2), th:nth-child(3) { text-align: center; }
+          th:last-child { text-align: right; }
           .total-row { background: #FF6B00; color: white; font-weight: bold; }
-          .total-row td { padding: 12px 8px; }
+          .total-row td { padding: 12px 10px; font-size: 14px; }
           .benefits { background: #e8f4fd; padding: 15px; border-radius: 8px; margin: 20px 0; }
-          .benefits h3 { color: #0066CC; margin-top: 0; }
-          .benefits ul { margin: 0; padding-left: 20px; }
-          .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
-          @media print { body { margin: 0; } }
+          .benefits h3 { color: #0066CC; margin: 0 0 10px; font-size: 15px; }
+          .benefits ul { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.8; }
+          .benefits li { margin: 3px 0; }
+          .footer { text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 11px; color: #888; }
+          @media print { 
+            body { padding: 10px; } 
+            .tagline { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .total-row { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          }
         </style>
       </head>
       <body>
         <div class="header">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Hapvida_logo.svg/1200px-Hapvida_logo.svg.png" alt="Hapvida" class="logo" onerror="this.style.display='none'">
-          <h1 style="color: #0066CC; margin: 10px 0;">Hapvida NotreDame Intermédica</h1>
-          <p style="color: #666;">Proposta Comercial de Plano de Saúde</p>
+          <div class="logo-text">Hapvida</div>
+          <div class="logo-sub">NotreDame Intermédica</div>
         </div>
 
         <div class="tagline">
-          <h2>🏥 Cuide de quem você ama com a maior rede de saúde do Brasil!</h2>
-          <p>Mais de 750 unidades próprias e milhares de prestadores credenciados à sua disposição.</p>
+          <h2>Cuide de quem você ama com a maior rede de saúde do Brasil!</h2>
+          <p>Mais de 750 unidades próprias e milhares de prestadores credenciados.</p>
         </div>
 
-        ${companyName ? `<h3>📋 Proposta para: ${companyName}</h3>` : ""}
-        ${expectedDate ? `<p><strong>Data prevista:</strong> ${expectedDate}</p>` : ""}
+        ${companyName ? `<div class="company-name">Proposta para: ${companyName}</div>` : ""}
+        ${expectedDate ? `<div class="date-info">Data prevista: ${expectedDate}</div>` : ""}
 
         <div class="info-box">
-          <div class="info-row"><span>📍 Filial:</span><span><strong>${cityName}</strong></span></div>
-          <div class="info-row"><span>📋 Tipo de Contrato:</span><span><strong>${contractName}</strong></span></div>
-          <div class="info-row"><span>💳 Coparticipação:</span><span><strong>${copartName}</strong></span></div>
-          <div class="info-row"><span>👥 Total de Vidas:</span><span><strong>${totalLives} (${totalTitulares} titulares + ${totalDependentes} dependentes)</strong></span></div>
+          <div class="info-row"><span class="info-label">Filial:</span><span class="info-value">${cityName}</span></div>
+          <div class="info-row"><span class="info-label">Tipo de Contrato:</span><span class="info-value">${contractName}</span></div>
+          <div class="info-row"><span class="info-label">Coparticipação:</span><span class="info-value">${copartName}</span></div>
+          <div class="info-row"><span class="info-label">Total de Vidas:</span><span class="info-value">${totalLives} (${totalTitulares} titulares + ${totalDependentes} dependentes)</span></div>
         </div>
 
-        <h3>💰 Detalhamento de Valores</h3>
+        <h3 style="margin: 15px 0 10px; font-size: 15px; color: #333;">Detalhamento de Valores</h3>
         <table>
           <thead>
             <tr>
@@ -348,13 +393,13 @@ export default function SimulationScreen() {
             <tr class="total-row">
               <td>TOTAL GERAL</td>
               <td style="text-align: center;">${totalLives}</td>
-              <td style="text-align: right;">${formatCurrency(grandTotal)}</td>
+              <td style="text-align: right;">R$ ${grandTotal.toFixed(2).replace('.', ',')}</td>
             </tr>
           </tbody>
         </table>
 
         <div class="benefits">
-          <h3>✅ Por que escolher a Hapvida?</h3>
+          <h3>Por que escolher a Hapvida?</h3>
           <ul>
             <li><strong>Maior rede própria do Brasil</strong> - Hospitais, clínicas e laboratórios próprios</li>
             <li><strong>Atendimento humanizado</strong> - Profissionais qualificados e dedicados</li>
@@ -372,6 +417,62 @@ export default function SimulationScreen() {
       </body>
       </html>
     `;
+  };
+
+  // Exportar PDF - funciona em iOS, Android e Web
+  const handleExportPDF = async () => {
+    if (totalLives === 0) {
+      Alert.alert("Atenção", "Adicione pelo menos uma vida para exportar o PDF.");
+      return;
+    }
+
+    setIsExporting(true);
+    
+    try {
+      const htmlContent = generatePDFContent();
+      
+      if (Platform.OS === "web") {
+        // Web: abre em nova aba para impressão
+        const printWindow = window.open("", "_blank");
+        if (printWindow) {
+          printWindow.document.write(htmlContent);
+          printWindow.document.close();
+          setTimeout(() => printWindow.print(), 500);
+        }
+      } else {
+        // Mobile: usa expo-print e expo-sharing
+        const { uri } = await Print.printToFileAsync({
+          html: htmlContent,
+          base64: false,
+        });
+        
+        // Verificar se pode compartilhar
+        const canShare = await Sharing.isAvailableAsync();
+        
+        if (canShare) {
+          await Sharing.shareAsync(uri, {
+            mimeType: "application/pdf",
+            dialogTitle: "Compartilhar Proposta Hapvida",
+            UTI: "com.adobe.pdf",
+          });
+        } else {
+          Alert.alert(
+            "PDF Gerado",
+            "O PDF foi gerado mas o compartilhamento não está disponível neste dispositivo.",
+            [{ text: "OK" }]
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao exportar PDF:", error);
+      Alert.alert(
+        "Erro",
+        "Não foi possível gerar o PDF. Por favor, tente novamente.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const formatCurrency = (value: number) => {
@@ -548,16 +649,13 @@ export default function SimulationScreen() {
                         <TouchableOpacity
                           onPress={() => handleRemoveLife(ageRange, "titular")}
                           className="w-8 h-8 bg-success/20 rounded items-center justify-center"
-                          style={{ opacity: titularCount > 0 ? 1 : 0.4 }}
-                          disabled={titularCount === 0}
+                          style={{ opacity: titularCount > 0 ? 1 : 0.3 }}
                         >
-                          <Text className="text-success font-bold text-lg">-</Text>
+                          <Text className="text-success font-bold text-lg">−</Text>
                         </TouchableOpacity>
-                        <View className="w-10 h-8 items-center justify-center mx-1">
-                          <Text className="text-foreground font-semibold text-base">
-                            {titularCount}
-                          </Text>
-                        </View>
+                        <Text className="w-8 text-center text-sm font-semibold text-foreground">
+                          {titularCount}
+                        </Text>
                         <TouchableOpacity
                           onPress={() => handleAddLife(ageRange, "titular")}
                           className="w-8 h-8 bg-success rounded items-center justify-center"
@@ -566,22 +664,19 @@ export default function SimulationScreen() {
                           <Text className="text-white font-bold text-lg">+</Text>
                         </TouchableOpacity>
                       </View>
-
+                      
                       {/* Dependente */}
                       <View className="w-28 flex-row items-center justify-center">
                         <TouchableOpacity
                           onPress={() => handleRemoveLife(ageRange, "dependente")}
                           className="w-8 h-8 bg-warning/20 rounded items-center justify-center"
-                          style={{ opacity: dependenteCount > 0 ? 1 : 0.4 }}
-                          disabled={dependenteCount === 0}
+                          style={{ opacity: dependenteCount > 0 ? 1 : 0.3 }}
                         >
-                          <Text className="text-warning font-bold text-lg">-</Text>
+                          <Text className="text-warning font-bold text-lg">−</Text>
                         </TouchableOpacity>
-                        <View className="w-10 h-8 items-center justify-center mx-1">
-                          <Text className="text-foreground font-semibold text-base">
-                            {dependenteCount}
-                          </Text>
-                        </View>
+                        <Text className="w-8 text-center text-sm font-semibold text-foreground">
+                          {dependenteCount}
+                        </Text>
                         <TouchableOpacity
                           onPress={() => handleAddLife(ageRange, "dependente")}
                           className="w-8 h-8 bg-warning rounded items-center justify-center"
@@ -592,36 +687,35 @@ export default function SimulationScreen() {
                       </View>
                     </View>
 
-                    {/* Resumo de produtos por faixa - clicável para editar */}
+                    {/* Resumo dos produtos selecionados */}
                     {(titularSummary.length > 0 || dependenteSummary.length > 0) && (
-                      <View className="flex-row mt-1 pl-2">
-                        <View className="flex-1" />
-                        <View className="w-28 px-1">
-                          {titularSummary.map(({ product, count, lives: summaryLives }) => (
-                            <TouchableOpacity 
-                              key={product?.id} 
-                              onPress={() => summaryLives[0] && handleEditLife(summaryLives[0])}
-                              className="flex-row items-center"
-                            >
-                              <Text className="text-xs text-success/70">
-                                {count}x {product?.shortName || "?"} ✏️
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                        <View className="w-28 px-1">
-                          {dependenteSummary.map(({ product, count, lives: summaryLives }) => (
-                            <TouchableOpacity 
-                              key={product?.id}
-                              onPress={() => summaryLives[0] && handleEditLife(summaryLives[0])}
-                              className="flex-row items-center"
-                            >
-                              <Text className="text-xs text-warning/70">
-                                {count}x {product?.shortName || "?"} ✏️
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
+                      <View className="mt-2 ml-2">
+                        {titularSummary.map(({ product, count, lives: summaryLives }) => (
+                          <TouchableOpacity
+                            key={`t-${product?.id}`}
+                            onPress={() => summaryLives[0] && handleEditLife(summaryLives[0])}
+                            className="flex-row items-center py-1"
+                          >
+                            <View className="w-2 h-2 bg-success rounded-full mr-2" />
+                            <Text className="text-xs text-muted flex-1">
+                              {count}x {product?.shortName || product?.name} (Tit.)
+                            </Text>
+                            <Text className="text-xs text-primary">✏️</Text>
+                          </TouchableOpacity>
+                        ))}
+                        {dependenteSummary.map(({ product, count, lives: summaryLives }) => (
+                          <TouchableOpacity
+                            key={`d-${product?.id}`}
+                            onPress={() => summaryLives[0] && handleEditLife(summaryLives[0])}
+                            className="flex-row items-center py-1"
+                          >
+                            <View className="w-2 h-2 bg-warning rounded-full mr-2" />
+                            <Text className="text-xs text-muted flex-1">
+                              {count}x {product?.shortName || product?.name} (Dep.)
+                            </Text>
+                            <Text className="text-xs text-primary">✏️</Text>
+                          </TouchableOpacity>
+                        ))}
                       </View>
                     )}
                   </View>
@@ -631,73 +725,50 @@ export default function SimulationScreen() {
           </View>
         </View>
 
-        {/* Resultados da Simulação */}
-        {totalLives > 0 && (
-          <View className="px-4">
-            <Text className="text-lg font-bold text-foreground mb-3">
-              Resumo por Produto
-            </Text>
-
+        {/* Resumo de Valores por Produto */}
+        {productTotals.length > 0 && (
+          <View className="px-4 mb-4">
             <View className="bg-surface rounded-xl border border-border overflow-hidden">
-              {/* Header da tabela */}
-              <View className="bg-primary/10 p-3 flex-row">
-                <Text className="flex-1 text-sm font-semibold text-foreground">
-                  Produto
-                </Text>
-                <Text className="w-16 text-sm font-semibold text-foreground text-center">
-                  Vidas
-                </Text>
-                <Text className="w-28 text-sm font-semibold text-foreground text-right">
-                  Valor Mensal
+              <View className="bg-primary/10 p-3">
+                <Text className="text-base font-semibold text-foreground">
+                  💰 Resumo de Valores
                 </Text>
               </View>
 
-              {/* Linhas */}
+              {/* Lista de produtos */}
               {productTotals.length > 0 ? (
-                productTotals.map(({ product, total, lives: productLives }, index) => (
-                  <View key={product.id}>
+                productTotals.map(({ product, total, lives: productLives }) => (
+                  <View key={product.id} className="border-b border-border last:border-b-0">
                     <TouchableOpacity
                       onPress={() => setExpandedProduct(
                         expandedProduct === product.id ? null : product.id
                       )}
-                      className={`p-3 flex-row items-center ${
-                        index < productTotals.length - 1 && expandedProduct !== product.id
-                          ? "border-b border-border"
-                          : ""
-                      }`}
+                      className="flex-row items-center p-3"
                       style={{ opacity: 1 }}
                     >
                       <View className="flex-1">
-                        <Text className="text-sm font-medium text-foreground">
+                        <Text className="text-sm font-semibold text-foreground">
                           {product.name}
                         </Text>
                         <Text className="text-xs text-muted">
-                          {product.accommodation === "APART"
-                            ? "Apartamento"
-                            : "Enfermaria"}{" "}
-                          • Toque para detalhes
+                          {product.segmentation}
                         </Text>
                       </View>
-                      <Text className="w-16 text-sm font-medium text-foreground text-center">
-                        {productLives.length}
+                      <Text className="w-16 text-sm text-muted text-center">
+                        {productLives.length} {productLives.length === 1 ? "vida" : "vidas"}
                       </Text>
-                      <View className="w-28 flex-row items-center justify-end">
-                        <Text className="text-base font-bold text-foreground">
-                          {formatCurrency(total)}
-                        </Text>
-                        <Text className="text-muted ml-2">
-                          {expandedProduct === product.id ? "▼" : "›"}
-                        </Text>
-                      </View>
+                      <Text className="w-28 text-sm font-bold text-primary text-right">
+                        {formatCurrency(total)}
+                      </Text>
+                      <Text className="ml-2 text-muted">
+                        {expandedProduct === product.id ? "▲" : "▼"}
+                      </Text>
                     </TouchableOpacity>
 
                     {/* Detalhamento expandido */}
                     {expandedProduct === product.id && (
-                      <View className="bg-background p-3 border-b border-border">
-                        <Text className="text-xs font-semibold text-muted mb-2">
-                          Detalhamento por Faixa Etária
-                        </Text>
-                        {AGE_RANGES.filter((ar) => 
+                      <View className="px-3 pb-3 bg-background/50">
+                        {AGE_RANGES.filter((ar) =>
                           productLives.some(l => l.ageRange === ar)
                         ).map((ageRange) => {
                           const price = getProductPrice(
@@ -781,10 +852,13 @@ export default function SimulationScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleExportPDF}
+                disabled={isExporting}
                 className="flex-1 bg-primary py-3 rounded-xl items-center"
-                style={{ opacity: 1 }}
+                style={{ opacity: isExporting ? 0.6 : 1 }}
               >
-                <Text className="text-white font-semibold">📄 Exportar PDF</Text>
+                <Text className="text-white font-semibold">
+                  {isExporting ? "⏳ Gerando..." : "📄 Exportar PDF"}
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -827,7 +901,7 @@ export default function SimulationScreen() {
         )}
       </ScrollView>
 
-      {/* Modal de Seleção de Produto */}
+      {/* Modal de Seleção de Produto com Contador */}
       <Modal
         visible={showProductModal}
         transparent
@@ -836,55 +910,109 @@ export default function SimulationScreen() {
       >
         <View className="flex-1 bg-black/50 justify-end">
           <View 
-            className="bg-background rounded-t-3xl max-h-[70%]"
+            className="bg-background rounded-t-3xl max-h-[80%]"
             style={{ backgroundColor: colors.background }}
           >
             <View className="p-4 border-b border-border">
               <View className="flex-row items-center justify-between">
                 <Text className="text-lg font-bold text-foreground">
-                  Selecione o Produto
+                  Selecione os Produtos
                 </Text>
                 <TouchableOpacity onPress={() => setShowProductModal(false)}>
                   <Text className="text-muted text-2xl">×</Text>
                 </TouchableOpacity>
               </View>
               {pendingEntry && (
-                <Text className="text-sm text-muted mt-1">
-                  {pendingEntry.type === "titular" ? "👤 Titular" : "👥 Dependente"} • {AGE_RANGE_LABELS[pendingEntry.ageRange]}
-                </Text>
+                <View className="flex-row items-center justify-between mt-2">
+                  <Text className="text-sm text-muted">
+                    {pendingEntry.type === "titular" ? "👤 Titular" : "👥 Dependente"} • {AGE_RANGE_LABELS[pendingEntry.ageRange]}
+                  </Text>
+                  <View className="bg-primary/20 px-2 py-1 rounded">
+                    <Text className="text-xs text-primary font-semibold">
+                      Total: {getTotalSelectedInModal()}
+                    </Text>
+                  </View>
+                </View>
               )}
             </View>
             
             <ScrollView className="p-4">
-              {availableProducts.map((product) => (
-                <TouchableOpacity
-                  key={product.id}
-                  onPress={() => confirmAddLife(product.id)}
-                  className="bg-surface rounded-xl p-4 mb-2 border border-border active:bg-primary/10"
-                  style={{ opacity: 1 }}
-                >
-                  <Text className="text-base font-semibold text-foreground">
-                    {product.name}
-                  </Text>
-                  <Text className="text-sm text-muted">
-                    {product.segmentation} • {product.accommodation === "APART" ? "Apartamento" : "Enfermaria"}
-                  </Text>
-                  {pendingEntry && (
-                    <Text className="text-sm text-primary mt-1 font-medium">
-                      {formatCurrency(
-                        getProductPrice(
-                          state.city!,
-                          state.contractType!,
-                          state.coparticipation!,
-                          product.id,
-                          pendingEntry.ageRange
-                        ) || 0
-                      )}/mês
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              ))}
+              {availableProducts.map((product) => {
+                const qty = getProductQuantity(product.id);
+                const price = pendingEntry ? getProductPrice(
+                  state.city!,
+                  state.contractType!,
+                  state.coparticipation!,
+                  product.id,
+                  pendingEntry.ageRange
+                ) || 0 : 0;
+                
+                return (
+                  <View
+                    key={product.id}
+                    className={`bg-surface rounded-xl p-4 mb-3 border ${qty > 0 ? 'border-primary' : 'border-border'}`}
+                  >
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-1 mr-3">
+                        <Text className="text-base font-semibold text-foreground">
+                          {product.name}
+                        </Text>
+                        <Text className="text-sm text-muted">
+                          {product.segmentation} • {product.accommodation === "APART" ? "Apartamento" : "Enfermaria"}
+                        </Text>
+                        <Text className="text-sm text-primary mt-1 font-medium">
+                          {formatCurrency(price)}/mês por vida
+                        </Text>
+                      </View>
+                      
+                      {/* Contador +/- */}
+                      <View className="flex-row items-center">
+                        <TouchableOpacity
+                          onPress={() => updateProductQuantity(product.id, -1)}
+                          className="w-10 h-10 bg-error/20 rounded-lg items-center justify-center"
+                          style={{ opacity: qty > 0 ? 1 : 0.3 }}
+                        >
+                          <Text className="text-error font-bold text-xl">−</Text>
+                        </TouchableOpacity>
+                        <View className="w-12 items-center">
+                          <Text className="text-lg font-bold text-foreground">
+                            {qty}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          onPress={() => updateProductQuantity(product.id, 1)}
+                          className="w-10 h-10 bg-success rounded-lg items-center justify-center"
+                          style={{ opacity: 1 }}
+                        >
+                          <Text className="text-white font-bold text-xl">+</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    
+                    {qty > 0 && (
+                      <View className="mt-2 pt-2 border-t border-border/50">
+                        <Text className="text-xs text-primary font-medium">
+                          Subtotal: {formatCurrency(price * qty)}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
             </ScrollView>
+            
+            {/* Botão Confirmar */}
+            <View className="p-4 border-t border-border">
+              <TouchableOpacity
+                onPress={confirmAddLives}
+                className="bg-primary py-4 rounded-xl items-center"
+                style={{ opacity: getTotalSelectedInModal() > 0 ? 1 : 0.5 }}
+              >
+                <Text className="text-white font-bold text-base">
+                  ✓ Adicionar {getTotalSelectedInModal()} {getTotalSelectedInModal() === 1 ? 'vida' : 'vidas'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

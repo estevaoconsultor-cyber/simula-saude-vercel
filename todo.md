@@ -105,3 +105,38 @@
 - [x] Implementar busca de executivos cadastrados
 - [ ] Configurar envio de e-mail ao receber novo cadastro
 - [x] Integrar com aba de contatos existente
+
+## Fase 11 - Preparação para Publicação nas Lojas
+- [x] Criar Política de Privacidade em português
+- [ ] Preparar configurações de build para produção
+- [x] Criar descrição do app para as lojas
+- [x] Criar textos promocionais curtos
+- [x] Documentar processo de publicação passo a passo
+- [x] Guia para Google Play Store
+- [x] Guia para Apple App Store
+
+## Fase 12 - Correções Críticas
+- [x] Corrigir bug de geração de PDF do orçamento (erro em todos celulares)
+- [x] Melhorar modal de adição de vidas com contador múltiplo (+/- com quantidade no meio)
+
+## Fase 13 - Atualização da Rede de Atendimento
+- [ ] Processar planilhas de rede credenciada (Advance 600/700, Smart 300/400/500, Premium 900.1, Infinity 1000.1)
+- [ ] Corrigir nome Premium 900.1 Care → Sem Rede Dor
+- [ ] Corrigir nome Premium 900.1 → Com Rede Dor
+- [ ] Corrigir nome Infinity → Infinity 1000.1
+- [ ] Adicionar Smart Ambulatorial na Rede Própria
+- [ ] Adicionar Smart Prime na Rede Própria (unificar todas planilhas)
+- [ ] Atualizar dados de rede no app
+- [ ] Criar estrutura hierárquica de contatos (5 equipes)
+- [ ] Adicionar equipe Camila Foiadelli (Gerente Sênior)
+- [ ] Adicionar equipe Leonardo Dias Mariano (Gerente Sênior)
+- [ ] Adicionar equipe Marcelo Lima (Gerente Sênior)
+- [ ] Adicionar equipe Maria Aparecida (Gerente Sênior)
+- [ ] Reorganizar equipe Estevão com hierarquia
+
+## Fase 14 - Melhorias Solicitadas
+- [x] Remover fotos dos executivos (padronizar ícones)
+- [ ] Adicionar Manuais Comerciais em Regras (com download)
+- [x] Adicionar Documentos Importantes em Regras (Carta de Responsabilidade, Contrato)
+- [x] Adicionar lista de Operadoras para Aproveitamento de Carência
+- [x] Adicionar informações do Plano do Vendedor

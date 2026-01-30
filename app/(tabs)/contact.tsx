@@ -6,27 +6,22 @@ import {
   TouchableOpacity,
   TextInput,
   Linking,
-  Image,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
+  TEAMS,
   MANAGERS,
   searchBroker,
   getManagerContact,
   type Broker,
   type Manager,
+  type Team,
 } from "@/data/brokers-data";
 
-// Fotos dos gestores
-const MANAGER_PHOTOS: Record<string, any> = {
-  "Estevão Cardoso": require("@/assets/images/managers/estevao.png"),
-  "Laís Martins": require("@/assets/images/managers/lais.png"),
-  "Pablo Amora": require("@/assets/images/managers/pablo.png"),
-  "Jonathan Leal": require("@/assets/images/managers/jonathan.png"),
-  "Agatha Sakamoto": require("@/assets/images/managers/agatha.png"),
-};
+// Fotos dos gestores removidas - todos usam ícone padrão para uniformidade
+const MANAGER_PHOTOS: Record<string, any> = {};
 
 // Chave para armazenar executivos cadastrados localmente
 const REGISTERED_EXECUTIVES_KEY = "@registered_executives";
@@ -50,6 +45,9 @@ export default function ContactScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Broker[]>([]);
   const [selectedBroker, setSelectedBroker] = useState<Broker | null>(null);
+  
+  // Estado para expandir/colapsar equipes
+  const [expandedTeams, setExpandedTeams] = useState<string[]>(["camila-foiadelli"]);
   
   // Estados para executivos cadastrados
   const [executiveSearchQuery, setExecutiveSearchQuery] = useState("");
@@ -99,6 +97,14 @@ export default function ContactScreen() {
     setSelectedBroker(null);
   };
 
+  const toggleTeam = (teamId: string) => {
+    setExpandedTeams(prev => 
+      prev.includes(teamId) 
+        ? prev.filter(id => id !== teamId)
+        : [...prev, teamId]
+    );
+  };
+
   const openWhatsApp = (phone: string, name: string) => {
     const cleanPhone = phone.replace(/\D/g, "");
     const formattedPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
@@ -113,50 +119,118 @@ export default function ContactScreen() {
     Linking.openURL(`mailto:${email}?subject=${subject}`);
   };
 
-  const renderManagerCard = (manager: Manager, index: number) => (
+  // Renderizar card de membro da equipe (compacto)
+  const renderMemberCard = (member: Manager) => (
     <View
-      key={manager.name}
-      className="bg-surface rounded-xl border border-border p-4 mb-3"
+      key={member.name}
+      className="bg-background rounded-lg border border-border/50 p-3 mb-2"
     >
-      <View className="flex-row items-center mb-3">
-        <View className="w-14 h-14 rounded-full bg-primary/20 items-center justify-center mr-3 overflow-hidden">
-          {MANAGER_PHOTOS[manager.name] ? (
-            <Image
-              source={MANAGER_PHOTOS[manager.name]}
-              className="w-14 h-14 rounded-full"
-              resizeMode="cover"
-            />
-          ) : (
-            <Text className="text-2xl">👤</Text>
-          )}
+      <View className="flex-row items-center">
+        <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center mr-3 overflow-hidden">
+<Text className="text-lg">👤</Text>
         </View>
         <View className="flex-1">
-          <Text className="text-base font-semibold text-foreground">
-            {manager.name}
+          <Text className="text-sm font-medium text-foreground">
+            {member.name}
           </Text>
-          <Text className="text-sm text-primary">{manager.role}</Text>
+          <Text className="text-xs text-muted">{member.role}</Text>
         </View>
-      </View>
-
-      <View className="flex-row gap-2">
-        <TouchableOpacity
-          onPress={() => openWhatsApp(manager.whatsapp, manager.name)}
-          className="flex-1 bg-success py-3 rounded-lg flex-row items-center justify-center"
-          style={{ opacity: 1 }}
-        >
-          <Text className="text-white font-medium">📱 WhatsApp</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => openEmail(manager.email, manager.name)}
-          className="flex-1 bg-primary py-3 rounded-lg flex-row items-center justify-center"
-          style={{ opacity: 1 }}
-        >
-          <Text className="text-white font-medium">✉️ E-mail</Text>
-        </TouchableOpacity>
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            onPress={() => openWhatsApp(member.whatsapp, member.name)}
+            className="w-9 h-9 bg-success rounded-lg items-center justify-center"
+            style={{ opacity: 1 }}
+          >
+            <Text className="text-white text-sm">📱</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => openEmail(member.email, member.name)}
+            className="w-9 h-9 bg-primary rounded-lg items-center justify-center"
+            style={{ opacity: 1 }}
+          >
+            <Text className="text-white text-sm">✉️</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
+
+  // Renderizar card de equipe com hierarquia
+  const renderTeamCard = (team: Team) => {
+    const isExpanded = expandedTeams.includes(team.id);
+    
+    return (
+      <View
+        key={team.id}
+        className="bg-surface rounded-xl border border-border mb-4 overflow-hidden"
+      >
+        {/* Header da equipe - Gerente Sênior */}
+        <TouchableOpacity
+          onPress={() => toggleTeam(team.id)}
+          className="p-4"
+          style={{ opacity: 1 }}
+        >
+          <View className="flex-row items-center">
+            <View className="w-14 h-14 rounded-full bg-primary/20 items-center justify-center mr-3 overflow-hidden">
+  <Text className="text-2xl">👑</Text>
+            </View>
+            <View className="flex-1">
+              <View className="flex-row items-center">
+                <Text className="text-base font-bold text-foreground">
+                  {team.senior.name}
+                </Text>
+                <View className="ml-2 bg-primary/20 px-2 py-0.5 rounded">
+                  <Text className="text-xs text-primary font-medium">
+                    {team.senior.role}
+                  </Text>
+                </View>
+              </View>
+              <Text className="text-xs text-muted mt-1">
+                {team.members.length} membro(s) na equipe
+              </Text>
+            </View>
+            <Text className="text-muted text-lg">
+              {isExpanded ? "▲" : "▼"}
+            </Text>
+          </View>
+          
+          {/* Botões de contato do gerente sênior */}
+          <View className="flex-row gap-2 mt-3">
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                openWhatsApp(team.senior.whatsapp, team.senior.name);
+              }}
+              className="flex-1 bg-success py-2.5 rounded-lg flex-row items-center justify-center"
+              style={{ opacity: 1 }}
+            >
+              <Text className="text-white font-medium text-sm">📱 WhatsApp</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                openEmail(team.senior.email, team.senior.name);
+              }}
+              className="flex-1 bg-primary py-2.5 rounded-lg flex-row items-center justify-center"
+              style={{ opacity: 1 }}
+            >
+              <Text className="text-white font-medium text-sm">✉️ E-mail</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+
+        {/* Membros da equipe (expandível) */}
+        {isExpanded && team.members.length > 0 && (
+          <View className="px-4 pb-4 pt-2 border-t border-border/50 bg-background/50">
+            <Text className="text-xs font-medium text-muted mb-2">
+              Equipe ({team.members.length})
+            </Text>
+            {team.members.map(member => renderMemberCard(member))}
+          </View>
+        )}
+      </View>
+    );
+  };
 
   const renderExecutiveCard = (executive: RegisteredExecutive) => (
     <View
@@ -165,15 +239,7 @@ export default function ContactScreen() {
     >
       <View className="flex-row items-center mb-3">
         <View className="w-14 h-14 rounded-full bg-primary/20 items-center justify-center mr-3 overflow-hidden">
-          {executive.photoUrl ? (
-            <Image
-              source={{ uri: executive.photoUrl }}
-              className="w-14 h-14 rounded-full"
-              resizeMode="cover"
-            />
-          ) : (
-            <Text className="text-2xl">👤</Text>
-          )}
+  <Text className="text-2xl">👤</Text>
         </View>
         <View className="flex-1">
           <Text className="text-base font-semibold text-foreground">
@@ -345,15 +411,7 @@ export default function ContactScreen() {
             <Text className="text-xs text-muted mb-2">Seu Gestor Comercial</Text>
             <View className="flex-row items-center mb-3">
               <View className="w-12 h-12 rounded-full bg-primary/20 items-center justify-center mr-3 overflow-hidden">
-                {MANAGER_PHOTOS[selectedBroker.manager] ? (
-                  <Image
-                    source={MANAGER_PHOTOS[selectedBroker.manager]}
-                    className="w-12 h-12 rounded-full"
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Text className="text-xl">👤</Text>
-                )}
+  <Text className="text-xl">👤</Text>
               </View>
               <View>
                 <Text className="text-base font-semibold text-foreground">
@@ -449,7 +507,7 @@ export default function ContactScreen() {
               activeTab === "team" ? "text-white" : "text-muted"
             }`}
           >
-            Equipe
+            Equipes
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -489,21 +547,17 @@ export default function ContactScreen() {
       >
         {activeTab === "team" ? (
           <>
-            {/* Gerente Sênior */}
-            <Text className="text-sm font-medium text-muted mb-2 mt-2">
-              Gerência
-            </Text>
-            {MANAGERS.filter((m) => m.role.includes("Gerente")).map(
-              (manager, index) => renderManagerCard(manager, index)
-            )}
-
-            {/* Executivos */}
-            <Text className="text-sm font-medium text-muted mb-2 mt-4">
-              Executivos Comerciais
-            </Text>
-            {MANAGERS.filter((m) => m.role.includes("Executiv")).map(
-              (manager, index) => renderManagerCard(manager, index)
-            )}
+            <View className="bg-primary/10 rounded-xl p-4 mb-4">
+              <Text className="text-base font-semibold text-primary mb-1">
+                👥 Equipes Comerciais Hapvida
+              </Text>
+              <Text className="text-xs text-muted">
+                Clique em uma equipe para ver os membros. Cada equipe é liderada por um Gerente Sênior.
+              </Text>
+            </View>
+            
+            {/* Renderizar todas as equipes */}
+            {TEAMS.map(team => renderTeamCard(team))}
           </>
         ) : activeTab === "search" ? (
           renderSearchTab()
