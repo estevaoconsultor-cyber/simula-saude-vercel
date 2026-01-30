@@ -54,3 +54,11 @@
 - [x] Criar aba "Regras" no menu com tópicos comerciais
 - [x] Separar rede em Própria e Credenciada com seleção de produto
 - [x] Mostrar serviços disponíveis em cada prestador
+
+## Fase 6 - Fotos dos Executivos
+- [x] Recortar foto circular do Pablo Amora
+- [x] Recortar foto circular do Jonathan Leal
+- [x] Recortar foto circular da Laís Martins
+- [x] Recortar foto circular da Agatha Sakamoto
+- [x] Recortar foto circular do Estevão Cardoso
+- [x] Atualizar aba de contatos com as fotos

@@ -18,6 +18,15 @@ import {
   type Manager,
 } from "@/data/brokers-data";
 
+// Fotos dos gestores
+const MANAGER_PHOTOS: Record<string, any> = {
+  "Estevão Cardoso": require("@/assets/images/managers/estevao.png"),
+  "Laís Martins": require("@/assets/images/managers/lais.png"),
+  "Pablo Amora": require("@/assets/images/managers/pablo.png"),
+  "Jonathan Leal": require("@/assets/images/managers/jonathan.png"),
+  "Agatha Sakamoto": require("@/assets/images/managers/agatha.png"),
+};
+
 type TabType = "team" | "search";
 
 export default function ContactScreen() {
@@ -56,8 +65,16 @@ export default function ContactScreen() {
       className="bg-surface rounded-xl border border-border p-4 mb-3"
     >
       <View className="flex-row items-center mb-3">
-        <View className="w-14 h-14 rounded-full bg-primary/20 items-center justify-center mr-3">
-          <Text className="text-2xl">👤</Text>
+        <View className="w-14 h-14 rounded-full bg-primary/20 items-center justify-center mr-3 overflow-hidden">
+          {MANAGER_PHOTOS[manager.name] ? (
+            <Image
+              source={MANAGER_PHOTOS[manager.name]}
+              className="w-14 h-14 rounded-full"
+              resizeMode="cover"
+            />
+          ) : (
+            <Text className="text-2xl">👤</Text>
+          )}
         </View>
         <View className="flex-1">
           <Text className="text-base font-semibold text-foreground">
@@ -164,8 +181,16 @@ export default function ContactScreen() {
           <View className="border-t border-border pt-4">
             <Text className="text-xs text-muted mb-2">Seu Gestor Comercial</Text>
             <View className="flex-row items-center mb-3">
-              <View className="w-12 h-12 rounded-full bg-primary/20 items-center justify-center mr-3">
-                <Text className="text-xl">👤</Text>
+              <View className="w-12 h-12 rounded-full bg-primary/20 items-center justify-center mr-3 overflow-hidden">
+                {MANAGER_PHOTOS[selectedBroker.manager] ? (
+                  <Image
+                    source={MANAGER_PHOTOS[selectedBroker.manager]}
+                    className="w-12 h-12 rounded-full"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text className="text-xl">👤</Text>
+                )}
               </View>
               <View>
                 <Text className="text-base font-semibold text-foreground">
