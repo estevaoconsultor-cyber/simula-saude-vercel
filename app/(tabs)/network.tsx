@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
+  Modal,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
@@ -19,20 +20,39 @@ import {
 
 type NetworkType = "propria" | "credenciada";
 
-// Produtos separados por tipo de rede
+// Produtos REDE PRÓPRIA: Nosso Médico, Smart 150, 200, 200 UP, Notre Life, Basic, Pleno
 const REDE_PROPRIA = [
-  { id: "nosso-medico", name: "Nosso Médico", description: "Rede própria Hapvida" },
+  { id: "nosso-medico", name: "Nosso Médico", description: "Rede própria Hapvida - Clínicas regionais" },
+  { id: "smart-150", name: "Smart 150", description: "Rede própria - Ambulatorial" },
+  { id: "smart-200", name: "Smart 200", description: "Rede própria - Enfermaria" },
+  { id: "smart-200-up", name: "Smart 200 UP", description: "Rede própria - Enfermaria ampliada" },
   { id: "notrelife", name: "NotreLife", description: "Rede própria integrada" },
   { id: "basic", name: "Basic Referência", description: "Rede própria básica" },
+  { id: "pleno", name: "Pleno", description: "Rede própria completa" },
 ];
 
+// Produtos REDE CREDENCIADA: Smart 300+, Advance, Premium, Infinity
 const REDE_CREDENCIADA = [
-  { id: "smart-200", name: "Smart 200", description: "Rede credenciada regional" },
-  { id: "smart-300", name: "Smart 300", description: "Rede credenciada ampliada" },
-  { id: "smart-400", name: "Smart 400", description: "Rede credenciada plus" },
+  { id: "smart-300", name: "Smart 300", description: "Rede credenciada regional" },
+  { id: "smart-400", name: "Smart 400", description: "Rede credenciada ampliada" },
   { id: "smart-500", name: "Smart 500", description: "Rede credenciada premium" },
-  { id: "pleno", name: "Pleno", description: "Rede credenciada completa" },
-  { id: "premium-900", name: "Premium 900", description: "Rede nacional premium" },
+  { id: "advance-600", name: "Advance 600", description: "Rede credenciada executiva" },
+  { id: "advance-700", name: "Advance 700", description: "Rede credenciada executiva plus" },
+  { id: "premium-900q", name: "Premium 900Q", description: "Rede nacional premium com rede DO" },
+  { id: "premium-900-1", name: "Premium 900.1", description: "Rede nacional premium sem rede DO" },
+  { id: "infinity", name: "Infinity", description: "Rede nacional completa - Todos os hospitais" },
+];
+
+// Estados disponíveis
+const ESTADOS = [
+  { id: "SP", name: "São Paulo" },
+  { id: "RJ", name: "Rio de Janeiro" },
+  { id: "MG", name: "Minas Gerais" },
+  { id: "BA", name: "Bahia" },
+  { id: "PR", name: "Paraná" },
+  { id: "RS", name: "Rio Grande do Sul" },
+  { id: "PE", name: "Pernambuco" },
+  { id: "CE", name: "Ceará" },
 ];
 
 // Serviços disponíveis por tipo de estabelecimento
@@ -50,16 +70,72 @@ export default function NetworkScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Filtros de geolocalização
+  const [selectedEstado, setSelectedEstado] = useState<string | null>(null);
+  const [selectedCidade, setSelectedCidade] = useState<string | null>(null);
+  const [selectedBairro, setSelectedBairro] = useState<string | null>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   const products = networkType === "propria" ? REDE_PROPRIA : REDE_CREDENCIADA;
 
   // Obter prestadores filtrados
   const providers = useMemo(() => {
     if (!selectedProduct) return [];
-    return searchProviders(selectedProduct, searchQuery, {
+    let results = searchProviders(selectedProduct, searchQuery, {
       type: selectedType || undefined,
     });
-  }, [selectedProduct, searchQuery, selectedType]);
+    
+    // Aplicar filtros de localização
+    if (selectedEstado) {
+      results = results.filter(p => {
+        // Assumindo que cidade contém o estado ou podemos inferir
+        const cityLower = p.city.toLowerCase();
+        if (selectedEstado === "SP") {
+          return cityLower.includes("são paulo") || cityLower.includes("sao paulo") || 
+                 cityLower.includes("campinas") || cityLower.includes("santos") ||
+                 cityLower.includes("guarulhos") || cityLower.includes("osasco") ||
+                 cityLower.includes("santo andré") || cityLower.includes("são bernardo") ||
+                 cityLower.includes("jundiaí") || cityLower.includes("mogi");
+        }
+        return true;
+      });
+    }
+    
+    if (selectedCidade) {
+      results = results.filter(p => 
+        p.city.toLowerCase().includes(selectedCidade.toLowerCase())
+      );
+    }
+    
+    if (selectedBairro) {
+      results = results.filter(p => 
+        p.neighborhood?.toLowerCase().includes(selectedBairro.toLowerCase())
+      );
+    }
+    
+    return results;
+  }, [selectedProduct, searchQuery, selectedType, selectedEstado, selectedCidade, selectedBairro]);
+
+  // Cidades disponíveis baseado nos prestadores
+  const availableCities = useMemo(() => {
+    if (!selectedProduct) return [];
+    const allProviders = getProvidersByProduct(selectedProduct);
+    const cities = [...new Set(allProviders.map(p => p.city))].filter(Boolean).sort();
+    return cities;
+  }, [selectedProduct]);
+
+  // Bairros disponíveis baseado na cidade selecionada
+  const availableBairros = useMemo(() => {
+    if (!selectedProduct || !selectedCidade) return [];
+    const allProviders = getProvidersByProduct(selectedProduct);
+    const bairros = [...new Set(
+      allProviders
+        .filter(p => p.city.toLowerCase().includes(selectedCidade.toLowerCase()))
+        .map(p => p.neighborhood)
+    )].filter(Boolean).sort();
+    return bairros as string[];
+  }, [selectedProduct, selectedCidade]);
 
   // Tipos disponíveis para o produto selecionado
   const availableTypes = useMemo(() => {
@@ -100,12 +176,24 @@ export default function NetworkScreen() {
     setSelectedProduct(productId);
     setSearchQuery("");
     setSelectedType(null);
+    setSelectedEstado(null);
+    setSelectedCidade(null);
+    setSelectedBairro(null);
   };
 
   const handleBack = () => {
     setSelectedProduct(null);
     setSearchQuery("");
     setSelectedType(null);
+    setSelectedEstado(null);
+    setSelectedCidade(null);
+    setSelectedBairro(null);
+  };
+
+  const clearLocationFilters = () => {
+    setSelectedEstado(null);
+    setSelectedCidade(null);
+    setSelectedBairro(null);
   };
 
   const renderProvider = ({ item }: { item: NetworkProvider }) => {
@@ -228,8 +316,8 @@ export default function NetworkScreen() {
           </Text>
           <Text className="text-xs text-muted">
             {networkType === "propria"
-              ? "Hospitais, clínicas e laboratórios próprios da Hapvida. Atendimento exclusivo com estrutura integrada."
-              : "Prestadores parceiros credenciados. Ampla cobertura com hospitais e clínicas de referência."}
+              ? "Nosso Médico, Smart 150, 200, 200 UP, NotreLife, Basic e Pleno. Hospitais, clínicas e laboratórios próprios da Hapvida."
+              : "Smart 300, 400, 500, Advance 600/700, Premium 900Q/900.1 e Infinity. Prestadores parceiros credenciados de referência."}
           </Text>
         </View>
 
@@ -276,6 +364,8 @@ export default function NetworkScreen() {
     (p) => p.id === selectedProduct
   );
 
+  const hasLocationFilter = selectedEstado || selectedCidade || selectedBairro;
+
   return (
     <ScreenContainer className="flex-1">
       {/* Header */}
@@ -293,7 +383,7 @@ export default function NetworkScreen() {
 
       {/* Busca */}
       <View className="px-4 mb-4">
-        <View className="bg-surface rounded-xl border border-border flex-row items-center px-3">
+        <View className="flex-row items-center bg-surface rounded-xl border border-border px-4">
           <Text className="text-lg mr-2">🔍</Text>
           <TextInput
             placeholder="Buscar por nome, bairro ou especialidade..."
@@ -310,6 +400,28 @@ export default function NetworkScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Botão de Filtro de Localização */}
+        <TouchableOpacity
+          onPress={() => setShowLocationModal(true)}
+          className={`mt-2 flex-row items-center justify-between bg-surface rounded-lg border ${hasLocationFilter ? "border-primary" : "border-border"} p-3`}
+          style={{ opacity: 1 }}
+        >
+          <View className="flex-row items-center flex-1">
+            <Text className="text-lg mr-2">📍</Text>
+            <Text className={`text-sm ${hasLocationFilter ? "text-primary font-medium" : "text-foreground"}`}>
+              {hasLocationFilter 
+                ? `${selectedEstado || ""} ${selectedCidade ? `> ${selectedCidade}` : ""} ${selectedBairro ? `> ${selectedBairro}` : ""}`.trim()
+                : "Filtrar por localização"
+              }
+            </Text>
+          </View>
+          {hasLocationFilter && (
+            <TouchableOpacity onPress={clearLocationFilters} className="ml-2">
+              <Text className="text-error text-sm">Limpar</Text>
+            </TouchableOpacity>
+          )}
+        </TouchableOpacity>
 
         {/* Filtro por tipo */}
         <TouchableOpacity
@@ -385,6 +497,157 @@ export default function NetworkScreen() {
           </View>
         }
       />
+
+      {/* Modal de Filtro de Localização */}
+      <Modal
+        visible={showLocationModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowLocationModal(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-end">
+          <View 
+            className="bg-background rounded-t-3xl max-h-[80%]"
+            style={{ backgroundColor: colors.background }}
+          >
+            <View className="p-4 border-b border-border">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-lg font-bold text-foreground">
+                  📍 Filtrar por Localização
+                </Text>
+                <TouchableOpacity onPress={() => setShowLocationModal(false)}>
+                  <Text className="text-muted text-2xl">×</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            <ScrollView className="p-4">
+              {/* Estado */}
+              <Text className="text-sm font-semibold text-foreground mb-2">
+                Estado
+              </Text>
+              <View className="flex-row flex-wrap gap-2 mb-4">
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedEstado(null);
+                    setSelectedCidade(null);
+                    setSelectedBairro(null);
+                  }}
+                  className={`px-3 py-2 rounded-lg ${!selectedEstado ? "bg-primary" : "bg-surface border border-border"}`}
+                  style={{ opacity: 1 }}
+                >
+                  <Text className={`text-sm ${!selectedEstado ? "text-white font-medium" : "text-foreground"}`}>
+                    Todos
+                  </Text>
+                </TouchableOpacity>
+                {ESTADOS.map((estado) => (
+                  <TouchableOpacity
+                    key={estado.id}
+                    onPress={() => {
+                      setSelectedEstado(estado.id);
+                      setSelectedCidade(null);
+                      setSelectedBairro(null);
+                    }}
+                    className={`px-3 py-2 rounded-lg ${selectedEstado === estado.id ? "bg-primary" : "bg-surface border border-border"}`}
+                    style={{ opacity: 1 }}
+                  >
+                    <Text className={`text-sm ${selectedEstado === estado.id ? "text-white font-medium" : "text-foreground"}`}>
+                      {estado.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Cidade */}
+              <Text className="text-sm font-semibold text-foreground mb-2">
+                Cidade
+              </Text>
+              {availableCities.length > 0 ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
+                  <View className="flex-row gap-2">
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedCidade(null);
+                        setSelectedBairro(null);
+                      }}
+                      className={`px-3 py-2 rounded-lg ${!selectedCidade ? "bg-primary" : "bg-surface border border-border"}`}
+                      style={{ opacity: 1 }}
+                    >
+                      <Text className={`text-sm ${!selectedCidade ? "text-white font-medium" : "text-foreground"}`}>
+                        Todas
+                      </Text>
+                    </TouchableOpacity>
+                    {availableCities.slice(0, 20).map((cidade) => (
+                      <TouchableOpacity
+                        key={cidade}
+                        onPress={() => {
+                          setSelectedCidade(cidade);
+                          setSelectedBairro(null);
+                        }}
+                        className={`px-3 py-2 rounded-lg ${selectedCidade === cidade ? "bg-primary" : "bg-surface border border-border"}`}
+                        style={{ opacity: 1 }}
+                      >
+                        <Text className={`text-sm ${selectedCidade === cidade ? "text-white font-medium" : "text-foreground"}`}>
+                          {cidade}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              ) : (
+                <Text className="text-sm text-muted mb-4">
+                  Selecione um produto para ver as cidades disponíveis
+                </Text>
+              )}
+
+              {/* Bairro */}
+              <Text className="text-sm font-semibold text-foreground mb-2">
+                Bairro
+              </Text>
+              {selectedCidade && availableBairros.length > 0 ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
+                  <View className="flex-row gap-2">
+                    <TouchableOpacity
+                      onPress={() => setSelectedBairro(null)}
+                      className={`px-3 py-2 rounded-lg ${!selectedBairro ? "bg-primary" : "bg-surface border border-border"}`}
+                      style={{ opacity: 1 }}
+                    >
+                      <Text className={`text-sm ${!selectedBairro ? "text-white font-medium" : "text-foreground"}`}>
+                        Todos
+                      </Text>
+                    </TouchableOpacity>
+                    {availableBairros.slice(0, 30).map((bairro) => (
+                      <TouchableOpacity
+                        key={bairro}
+                        onPress={() => setSelectedBairro(bairro)}
+                        className={`px-3 py-2 rounded-lg ${selectedBairro === bairro ? "bg-primary" : "bg-surface border border-border"}`}
+                        style={{ opacity: 1 }}
+                      >
+                        <Text className={`text-sm ${selectedBairro === bairro ? "text-white font-medium" : "text-foreground"}`}>
+                          {bairro}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              ) : (
+                <Text className="text-sm text-muted mb-4">
+                  {selectedCidade ? "Nenhum bairro disponível" : "Selecione uma cidade para ver os bairros"}
+                </Text>
+              )}
+
+              {/* Botão Aplicar */}
+              <TouchableOpacity
+                onPress={() => setShowLocationModal(false)}
+                className="bg-primary py-3 rounded-xl items-center mt-4"
+                style={{ opacity: 1 }}
+              >
+                <Text className="text-white font-semibold">Aplicar Filtros</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScreenContainer>
   );
 }

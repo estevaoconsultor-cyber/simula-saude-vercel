@@ -68,3 +68,21 @@
 - [x] Distribuição de vidas: Mostrar quantidade (0,1,2,3) entre botões - e +
 - [x] Distribuição de vidas: Permitir mescla de produtos por vida
 - [x] Nova Simulação: Zerar orçamento sem voltar ao início
+
+## Fase 8 - Novas Funcionalidades
+- [x] Pesquisar e baixar logo Hapvida atualizada
+- [x] Implementar botão editar/remover vida específica na simulação
+- [x] Criar exportação PDF com logo Hapvida e gatilho emocional
+- [x] PDF: Máximo 2 páginas (1 página info comercial + 1 página orçamento)
+- [x] Implementar salvar simulações favoritas
+- [x] Favoritos: Campo nome da empresa
+- [x] Favoritos: Campo data prevista para uso da proposta
+- [x] Corrigir rede própria: Nosso Médico, Smart 150, 200, 200 UP, Notre Life, Basic, Pleno
+- [x] Corrigir rede credenciada: Smart 300+, Advance 600/700, Premium 900Q/900.1, Infinity
+- [x] Remover Smart 200 da rede credenciada
+- [x] Adicionar Advance 600, Advance 700 na rede credenciada
+- [x] Adicionar Premium 900Q e Premium 900.1 (com/sem rede DO)
+- [x] Adicionar Infinity na rede credenciada
+- [x] Rede: Adicionar filtro por Estado
+- [x] Rede: Adicionar filtro por Cidade
+- [x] Rede: Adicionar filtro por Bairro
