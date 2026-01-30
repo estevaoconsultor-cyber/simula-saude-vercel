@@ -153,3 +153,4 @@
 - [x] Corrigir nomes de produtos em todas as telas
 - [x] Adicionar produtos com reembolso total e parcial (Advance, Premium, Infinity)
 - [x] Adicionar Premium 900.1 Care (SEM Rede Dor)
+- [x] Adicionar preços para todos os produtos novos (reembolso total/parcial)
