@@ -20,12 +20,11 @@ import {
 
 type NetworkType = "propria" | "credenciada";
 
-// Produtos REDE PRÓPRIA: Nosso Médico, Smart 150, 200, 200 UP, Notre Life, Basic, Pleno
+// Produtos REDE PRÓPRIA: Nosso Médico, Smart Ambulatorial, Smart Prime, Notre Life, Basic, Pleno
 const REDE_PROPRIA = [
   { id: "nosso-medico", name: "Nosso Médico", description: "Rede própria Hapvida - Clínicas regionais" },
-  { id: "smart-150", name: "Smart 150", description: "Rede própria - Ambulatorial" },
-  { id: "smart-200", name: "Smart 200", description: "Rede própria - Enfermaria" },
-  { id: "smart-200-up", name: "Smart 200 UP", description: "Rede própria - Enfermaria ampliada" },
+  { id: "smart-ambulatorial", name: "Smart Ambulatorial", description: "Rede própria ambulatorial (RJ e SP)" },
+  { id: "smart-prime", name: "Smart Prime", description: "Rede própria nacional" },
   { id: "notrelife", name: "NotreLife", description: "Rede própria integrada" },
   { id: "basic", name: "Basic Referência", description: "Rede própria básica" },
   { id: "pleno", name: "Pleno", description: "Rede própria completa" },
@@ -34,13 +33,15 @@ const REDE_PROPRIA = [
 // Produtos REDE CREDENCIADA: Smart 300+, Advance, Premium, Infinity
 const REDE_CREDENCIADA = [
   { id: "smart-300", name: "Smart 300", description: "Rede credenciada regional" },
-  { id: "smart-400", name: "Smart 400", description: "Rede credenciada ampliada" },
-  { id: "smart-500", name: "Smart 500", description: "Rede credenciada premium" },
+  { id: "smart-400-apto", name: "Smart 400 Apartamento", description: "Rede credenciada ampliada - Apto" },
+  { id: "smart-400-enf", name: "Smart 400 Enfermaria", description: "Rede credenciada ampliada - Enf" },
+  { id: "smart-500-apto", name: "Smart 500 Apartamento", description: "Rede credenciada premium - Apto" },
+  { id: "smart-500-enf", name: "Smart 500 Enfermaria", description: "Rede credenciada premium - Enf" },
   { id: "advance-600", name: "Advance 600", description: "Rede credenciada executiva" },
   { id: "advance-700", name: "Advance 700", description: "Rede credenciada executiva plus" },
-  { id: "premium-900q", name: "Premium 900Q", description: "Rede nacional premium com rede DO" },
-  { id: "premium-900-1", name: "Premium 900.1", description: "Rede nacional premium sem rede DO" },
-  { id: "infinity", name: "Infinity", description: "Rede nacional completa - Todos os hospitais" },
+  { id: "premium-900-1", name: "Premium 900.1", description: "Rede nacional premium COM Rede Dor" },
+  { id: "premium-900-1-care", name: "Premium 900.1 Care", description: "Rede nacional premium SEM Rede Dor" },
+  { id: "infinity-1000-1", name: "Infinity 1000.1", description: "Rede nacional completa - Todos os hospitais" },
 ];
 
 // Estados disponíveis

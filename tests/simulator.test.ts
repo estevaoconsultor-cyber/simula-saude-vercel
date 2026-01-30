@@ -141,7 +141,7 @@ describe("Hapvida Simulator Data", () => {
         "sao-paulo",
         "super-simples-1-vida",
         "parcial",
-        "advance-600-enf",
+        "advance-600-enf-total",
         "29-33"
       );
       expect(priceSmart).not.toBeNull();

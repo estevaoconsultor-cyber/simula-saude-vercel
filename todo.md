@@ -147,3 +147,9 @@
 - [x] Adicionar 10 manuais comerciais para download
 - [x] Atualizar dados de rede no app
 - [x] Validar todas as funcionalidades
+
+## Fase 16 - Correções Finais
+- [x] Atualizar estrutura de equipes de contato (5 equipes com hierarquia)
+- [x] Corrigir nomes de produtos em todas as telas
+- [x] Adicionar produtos com reembolso total e parcial (Advance, Premium, Infinity)
+- [x] Adicionar Premium 900.1 Care (SEM Rede Dor)

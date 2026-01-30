@@ -38,7 +38,7 @@ describe("Hapvida Prices Data", () => {
     it("should have products defined", () => {
       expect(PRODUCTS.length).toBeGreaterThan(0);
       expect(PRODUCTS.find((p) => p.id === "smart-200")).toBeDefined();
-      expect(PRODUCTS.find((p) => p.id === "infinity")).toBeDefined();
+      expect(PRODUCTS.find((p) => p.id === "infinity-1000-1-total")).toBeDefined();
     });
   });
 

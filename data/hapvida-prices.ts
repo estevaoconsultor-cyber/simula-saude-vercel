@@ -217,14 +217,31 @@ export const PRODUCTS: Product[] = [
   { id: "smart-prime-enf", name: "Smart Prime Enfermaria", shortName: "Prime E", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
   { id: "smart-prime-apt", name: "Smart Prime Apartamento", shortName: "Prime A", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: false },
   
-  // Premium - Advance e Premium
-  { id: "advance-600-enf", name: "Advance 600 Enfermaria", shortName: "Adv600 E", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "total" },
-  { id: "advance-600-apt", name: "Advance 600 Apartamento", shortName: "Adv600 A", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
-  { id: "advance-700-enf", name: "Advance 700 Enfermaria", shortName: "Adv700 E", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "total" },
-  { id: "advance-700-apt", name: "Advance 700 Apartamento", shortName: "Adv700 A", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
-  { id: "premium-900-enf", name: "Premium 900 Enfermaria", shortName: "Prem E", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "total" },
-  { id: "premium-900-apt", name: "Premium 900 Apartamento", shortName: "Prem A", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
-  { id: "infinity", name: "Infinity", shortName: "Infinity", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
+  // Premium - Advance (Reembolso Total e Parcial)
+  { id: "advance-600-enf-total", name: "Advance 600 Enf (Reemb. Total)", shortName: "Adv600 E T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "total" },
+  { id: "advance-600-enf-parcial", name: "Advance 600 Enf (Reemb. Parcial)", shortName: "Adv600 E P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "parcial" },
+  { id: "advance-600-apt-total", name: "Advance 600 Apto (Reemb. Total)", shortName: "Adv600 A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
+  { id: "advance-600-apt-parcial", name: "Advance 600 Apto (Reemb. Parcial)", shortName: "Adv600 A P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
+  { id: "advance-700-enf-total", name: "Advance 700 Enf (Reemb. Total)", shortName: "Adv700 E T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "total" },
+  { id: "advance-700-enf-parcial", name: "Advance 700 Enf (Reemb. Parcial)", shortName: "Adv700 E P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "parcial" },
+  { id: "advance-700-apt-total", name: "Advance 700 Apto (Reemb. Total)", shortName: "Adv700 A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
+  { id: "advance-700-apt-parcial", name: "Advance 700 Apto (Reemb. Parcial)", shortName: "Adv700 A P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
+  
+  // Premium 900.1 (COM Rede Dor) - Reembolso Total e Parcial
+  { id: "premium-900-1-enf-total", name: "Premium 900.1 Enf (Reemb. Total)", shortName: "Prem E T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "total" },
+  { id: "premium-900-1-enf-parcial", name: "Premium 900.1 Enf (Reemb. Parcial)", shortName: "Prem E P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "parcial" },
+  { id: "premium-900-1-apt-total", name: "Premium 900.1 Apto (Reemb. Total)", shortName: "Prem A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
+  { id: "premium-900-1-apt-parcial", name: "Premium 900.1 Apto (Reemb. Parcial)", shortName: "Prem A P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
+  
+  // Premium 900.1 Care (SEM Rede Dor) - Reembolso Total e Parcial
+  { id: "premium-900-1-care-enf-total", name: "Premium 900.1 Care Enf (Reemb. Total)", shortName: "Care E T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "total" },
+  { id: "premium-900-1-care-enf-parcial", name: "Premium 900.1 Care Enf (Reemb. Parcial)", shortName: "Care E P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "parcial" },
+  { id: "premium-900-1-care-apt-total", name: "Premium 900.1 Care Apto (Reemb. Total)", shortName: "Care A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
+  { id: "premium-900-1-care-apt-parcial", name: "Premium 900.1 Care Apto (Reemb. Parcial)", shortName: "Care A P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
+  
+  // Infinity 1000.1 - Reembolso Total e Parcial
+  { id: "infinity-1000-1-total", name: "Infinity 1000.1 (Reemb. Total)", shortName: "Inf T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
+  { id: "infinity-1000-1-parcial", name: "Infinity 1000.1 (Reemb. Parcial)", shortName: "Inf P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
 ];
 
 // Tipo para tabela de preços por faixa etária
@@ -280,32 +297,32 @@ const SP_PME_ADESAO_PARCIAL: Record<string, PriceTable> = {
     "34-38": 450.86, "39-43": 495.95, "44-48": 619.94, "49-53": 749.55,
     "54-58": 937.57, "59+": 1491.68
   },
-  "advance-600-enf": {
+  "advance-600-enf-total": {
     "00-18": 269.89, "19-23": 315.77, "24-28": 385.24, "29-33": 462.29,
     "34-38": 485.41, "39-43": 533.94, "44-48": 667.43, "49-53": 806.97,
     "54-58": 1009.40, "59+": 1605.97
   },
-  "advance-600-apt": {
+  "advance-600-apt-total": {
     "00-18": 299.59, "19-23": 350.52, "24-28": 427.63, "29-33": 513.17,
     "34-38": 538.83, "39-43": 592.71, "44-48": 740.88, "49-53": 895.78,
     "54-58": 1120.47, "59+": 1782.69
   },
-  "advance-700-enf": {
+  "advance-700-enf-total": {
     "00-18": 356.49, "19-23": 417.09, "24-28": 508.84, "29-33": 610.62,
     "34-38": 641.17, "39-43": 705.28, "44-48": 881.60, "49-53": 1065.92,
     "54-58": 1333.28, "59+": 2121.28
   },
-  "advance-700-apt": {
+  "advance-700-apt-total": {
     "00-18": 395.72, "19-23": 462.99, "24-28": 564.84, "29-33": 677.81,
     "34-38": 711.71, "39-43": 782.88, "44-48": 978.62, "49-53": 1183.22,
     "54-58": 1480.01, "59+": 2354.73
   },
-  "premium-900-apt": {
+  "premium-900-1-apt-total": {
     "00-18": 752.61, "19-23": 880.54, "24-28": 1074.25, "29-33": 1289.12,
     "34-38": 1353.59, "39-43": 1488.93, "44-48": 1861.17, "49-53": 2250.28,
     "54-58": 2814.75, "59+": 4478.30
   },
-  "infinity": {
+  "infinity-1000-1-total": {
     "00-18": 800.77, "19-23": 936.89, "24-28": 1142.99, "29-33": 1371.61,
     "34-38": 1440.20, "39-43": 1584.21, "44-48": 1980.27, "49-53": 2394.27,
     "54-58": 2994.86, "59+": 4764.87
@@ -359,32 +376,32 @@ const SP_PME_ADESAO_TOTAL: Record<string, PriceTable> = {
     "34-38": 338.17, "39-43": 371.98, "44-48": 464.98, "49-53": 562.19,
     "54-58": 703.22, "59+": 1118.83
   },
-  "advance-600-enf": {
+  "advance-600-enf-total": {
     "00-18": 202.42, "19-23": 236.84, "24-28": 288.94, "29-33": 346.74,
     "34-38": 364.07, "39-43": 400.48, "44-48": 500.60, "49-53": 605.27,
     "54-58": 757.10, "59+": 1204.55
   },
-  "advance-600-apt": {
+  "advance-600-apt-total": {
     "00-18": 224.69, "19-23": 262.89, "24-28": 320.72, "29-33": 384.87,
     "34-38": 404.13, "39-43": 444.54, "44-48": 555.68, "49-53": 671.86,
     "54-58": 840.39, "59+": 1337.07
   },
-  "advance-700-enf": {
+  "advance-700-enf-total": {
     "00-18": 267.39, "19-23": 312.84, "24-28": 381.66, "29-33": 458.00,
     "34-38": 480.91, "39-43": 528.99, "44-48": 661.25, "49-53": 799.50,
     "54-58": 1000.04, "59+": 1591.08
   },
-  "advance-700-apt": {
+  "advance-700-apt-total": {
     "00-18": 296.80, "19-23": 347.25, "24-28": 423.65, "29-33": 508.38,
     "34-38": 533.81, "39-43": 587.18, "44-48": 733.98, "49-53": 887.43,
     "54-58": 1110.03, "59+": 1766.08
   },
-  "premium-900-apt": {
+  "premium-900-1-apt-total": {
     "00-18": 541.07, "19-23": 633.05, "24-28": 772.31, "29-33": 926.78,
     "34-38": 973.12, "39-43": 1070.43, "44-48": 1338.05, "49-53": 1617.80,
     "54-58": 2023.61, "59+": 3219.60
   },
-  "infinity": {
+  "infinity-1000-1-total": {
     "00-18": 575.70, "19-23": 673.56, "24-28": 821.74, "29-33": 986.09,
     "34-38": 1035.40, "39-43": 1138.94, "44-48": 1423.68, "49-53": 1721.33,
     "54-58": 2153.11, "59+": 3425.63
@@ -438,27 +455,27 @@ const SP_SS_MEI_PARCIAL: Record<string, PriceTable> = {
     "34-38": 510.12, "39-43": 561.13, "44-48": 701.42, "49-53": 848.09,
     "54-58": 1060.80, "59+": 1687.74
   },
-  "advance-600-enf": {
+  "advance-600-enf-total": {
     "00-18": 297.23, "19-23": 347.76, "24-28": 424.26, "29-33": 509.11,
     "34-38": 534.58, "39-43": 588.03, "44-48": 735.04, "49-53": 888.72,
     "54-58": 1111.65, "59+": 1768.65
   },
-  "advance-600-apt": {
+  "advance-600-apt-total": {
     "00-18": 329.92, "19-23": 386.01, "24-28": 470.92, "29-33": 565.12,
     "34-38": 593.38, "39-43": 652.72, "44-48": 815.90, "49-53": 986.48,
     "54-58": 1233.92, "59+": 1963.18
   },
-  "advance-700-enf": {
+  "advance-700-enf-total": {
     "00-18": 392.60, "19-23": 459.34, "24-28": 560.39, "29-33": 672.48,
     "34-38": 706.12, "39-43": 776.73, "44-48": 970.92, "49-53": 1173.91,
     "54-58": 1468.36, "59+": 2336.18
   },
-  "advance-700-apt": {
+  "advance-700-apt-total": {
     "00-18": 435.79, "19-23": 509.87, "24-28": 622.03, "29-33": 746.44,
     "34-38": 783.77, "39-43": 862.14, "44-48": 1077.69, "49-53": 1303.01,
     "54-58": 1629.84, "59+": 2593.11
   },
-  "premium-900-apt": {
+  "premium-900-1-apt-total": {
     "00-18": 828.82, "19-23": 969.71, "24-28": 1183.04, "29-33": 1419.67,
     "34-38": 1490.67, "39-43": 1639.72, "44-48": 2049.66, "49-53": 2478.18,
     "54-58": 3099.81, "59+": 4931.83
@@ -512,27 +529,27 @@ const SP_SS_MEI_TOTAL: Record<string, PriceTable> = {
     "34-38": 382.57, "39-43": 420.83, "44-48": 526.04, "49-53": 636.04,
     "54-58": 795.56, "59+": 1265.73
   },
-  "advance-600-enf": {
+  "advance-600-enf-total": {
     "00-18": 222.92, "19-23": 260.82, "24-28": 318.19, "29-33": 381.83,
     "34-38": 400.92, "39-43": 441.01, "44-48": 551.25, "49-53": 666.51,
     "54-58": 833.69, "59+": 1326.40
   },
-  "advance-600-apt": {
+  "advance-600-apt-total": {
     "00-18": 247.44, "19-23": 289.51, "24-28": 353.19, "29-33": 423.84,
     "34-38": 445.04, "39-43": 489.53, "44-48": 611.92, "49-53": 739.85,
     "54-58": 925.43, "59+": 1472.37
   },
-  "advance-700-enf": {
+  "advance-700-enf-total": {
     "00-18": 294.47, "19-23": 344.52, "24-28": 420.31, "29-33": 504.38,
     "34-38": 529.61, "39-43": 582.57, "44-48": 728.22, "49-53": 880.47,
     "54-58": 1101.32, "59+": 1752.22
   },
-  "advance-700-apt": {
+  "advance-700-apt-total": {
     "00-18": 326.86, "19-23": 382.42, "24-28": 466.56, "29-33": 559.87,
     "34-38": 587.88, "39-43": 646.65, "44-48": 808.32, "49-53": 977.31,
     "54-58": 1222.46, "59+": 1944.95
   },
-  "premium-900-apt": {
+  "premium-900-1-apt-total": {
     "00-18": 595.85, "19-23": 697.14, "24-28": 850.50, "29-33": 1020.61,
     "34-38": 1071.65, "39-43": 1178.81, "44-48": 1473.52, "49-53": 1781.59,
     "54-58": 2228.48, "59+": 3545.54
@@ -591,22 +608,22 @@ const SP_SS_1VIDA_PARCIAL: Record<string, PriceTable> = {
     "34-38": 716.41, "39-43": 788.05, "44-48": 985.07, "49-53": 1191.01,
     "54-58": 1489.77, "59+": 2370.23
   },
-  "advance-600-enf": {
+  "advance-600-enf-total": {
     "00-18": 383.95, "19-23": 449.22, "24-28": 548.05, "29-33": 657.66,
     "34-38": 690.56, "39-43": 759.60, "44-48": 949.50, "49-53": 1148.01,
     "54-58": 1435.97, "59+": 2284.65
   },
-  "advance-600-apt": {
+  "advance-600-apt-total": {
     "00-18": 426.16, "19-23": 498.61, "24-28": 608.29, "29-33": 729.97,
     "34-38": 766.48, "39-43": 843.13, "44-48": 1053.91, "49-53": 1274.25,
     "54-58": 1593.87, "59+": 2535.87
   },
-  "advance-700-enf": {
+  "advance-700-enf-total": {
     "00-18": 471.10, "19-23": 551.18, "24-28": 672.43, "29-33": 806.92,
     "34-38": 847.28, "39-43": 932.00, "44-48": 1165.01, "49-53": 1408.57,
     "54-58": 1761.88, "59+": 2803.19
   },
-  "advance-700-apt": {
+  "advance-700-apt-total": {
     "00-18": 522.93, "19-23": 611.82, "24-28": 746.41, "29-33": 895.69,
     "34-38": 940.48, "39-43": 1034.52, "44-48": 1293.17, "49-53": 1563.53,
     "54-58": 1955.71, "59+": 3111.57
@@ -665,22 +682,22 @@ const SP_SS_1VIDA_TOTAL: Record<string, PriceTable> = {
     "34-38": 537.30, "39-43": 591.03, "44-48": 738.78, "49-53": 893.24,
     "54-58": 1117.29, "59+": 1777.63
   },
-  "advance-600-enf": {
+  "advance-600-enf-total": {
     "00-18": 287.96, "19-23": 336.91, "24-28": 411.02, "29-33": 493.23,
     "34-38": 517.89, "39-43": 569.68, "44-48": 712.09, "49-53": 860.97,
     "54-58": 1076.94, "59+": 1713.41
   },
-  "advance-600-apt": {
+  "advance-600-apt-total": {
     "00-18": 319.65, "19-23": 373.99, "24-28": 456.25, "29-33": 547.51,
     "34-38": 574.90, "39-43": 632.38, "44-48": 790.49, "49-53": 955.75,
     "54-58": 1195.50, "59+": 1902.05
   },
-  "advance-700-enf": {
+  "advance-700-enf-total": {
     "00-18": 353.33, "19-23": 413.39, "24-28": 504.33, "29-33": 605.20,
     "34-38": 635.47, "39-43": 699.01, "44-48": 873.77, "49-53": 1056.45,
     "54-58": 1321.44, "59+": 2102.44
   },
-  "advance-700-apt": {
+  "advance-700-apt-total": {
     "00-18": 392.21, "19-23": 458.87, "24-28": 559.83, "29-33": 671.80,
     "34-38": 705.40, "39-43": 775.93, "44-48": 969.92, "49-53": 1172.69,
     "54-58": 1466.85, "59+": 2333.78
