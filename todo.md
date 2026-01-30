@@ -154,3 +154,8 @@
 - [x] Adicionar produtos com reembolso total e parcial (Advance, Premium, Infinity)
 - [x] Adicionar Premium 900.1 Care (SEM Rede Dor)
 - [x] Adicionar preços para todos os produtos novos (reembolso total/parcial)
+
+## Fase 17 - Correção de Download
+- [x] Corrigir erro de download de arquivos na aba de Regras
+- [x] Fazer upload de todos os documentos para CDN
+- [x] Implementar download direto via URLs públicas

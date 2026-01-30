@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ScrollView, Text, View, TouchableOpacity, TextInput, Linking, Alert, Platform } from "react-native";
-import * as FileSystem from "expo-file-system";
+import { ScrollView, Text, View, TouchableOpacity, TextInput, Linking, Alert, Platform, ActivityIndicator } from "react-native";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
+import { DOCUMENT_URLS } from "@/data/document-urls";
 
 // Tipos para as seções
 type ContentItem = string | { type: "list"; items: { name: string; ans?: string; convenio?: string }[] };
@@ -341,29 +342,85 @@ export default function RulesScreen() {
     );
   };
 
+  const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
+
+  // Mapeamento de nomes de arquivos para chaves do DOCUMENT_URLS
+  const getDocumentKey = (filename: string): string => {
+    const mapping: Record<string, string> = {
+      "0.ManualAPPdoBeneficiário.pdf": "0.ManualAPPdoBeneficiario.pdf",
+      "2.GuiaPráticoAppVendedor(a).pdf": "2.GuiaPraticoAppVendedor.pdf",
+      "7.ManualdemovimentaçãoparacontratosPF.pdf": "7.ManualMovimentacaoPF.pdf",
+      "9.ManualdeReembolso-APPePortal.pdf": "9.ManualdeReembolso.pdf",
+    };
+    return mapping[filename] || filename;
+  };
+
   const handleDownload = async (filename: string, displayName: string) => {
     try {
-      // Para documentos, vamos abrir um link ou compartilhar
+      setDownloadingFile(filename);
+      
+      // Obter URL direta do CDN
+      const docKey = getDocumentKey(filename);
+      const doc = DOCUMENT_URLS[docKey];
+      
+      if (!doc) {
+        Alert.alert("Erro", `Documento "${displayName}" não encontrado.`);
+        setDownloadingFile(null);
+        return;
+      }
+      
+      const downloadUrl = doc.url;
+      
+      // Para web, abrir em nova aba
+      if (Platform.OS === "web") {
+        window.open(downloadUrl, "_blank");
+        setDownloadingFile(null);
+        return;
+      }
+      
+      // Para mobile, baixar e compartilhar
       Alert.alert(
         "📥 Download",
         `Deseja baixar o documento "${displayName}"?`,
         [
-          { text: "Cancelar", style: "cancel" },
+          { text: "Cancelar", style: "cancel", onPress: () => setDownloadingFile(null) },
           { 
             text: "Baixar", 
             onPress: async () => {
-              // Em produção, isso seria um link para o servidor
-              // Por enquanto, mostrar mensagem de sucesso
-              Alert.alert(
-                "✅ Sucesso",
-                `O documento "${displayName}" está disponível para download. Consulte seu gestor comercial para obter o arquivo.`
-              );
+              try {
+                // Baixar arquivo para o dispositivo
+                const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
+                const fileUri = FileSystem.documentDirectory + safeFilename;
+                const downloadResult = await FileSystem.downloadAsync(downloadUrl, fileUri);
+                
+                if (downloadResult.status !== 200) {
+                  throw new Error("Falha no download");
+                }
+                
+                // Verificar se pode compartilhar
+                const canShare = await Sharing.isAvailableAsync();
+                if (canShare) {
+                  await Sharing.shareAsync(downloadResult.uri, {
+                    mimeType: filename.endsWith(".pdf") ? "application/pdf" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    dialogTitle: displayName,
+                  });
+                } else {
+                  Alert.alert("✅ Sucesso", `Documento salvo em: ${downloadResult.uri}`);
+                }
+              } catch (error) {
+                console.error("Erro no download:", error);
+                Alert.alert("Erro", "Não foi possível baixar o documento. Tente novamente.");
+              } finally {
+                setDownloadingFile(null);
+              }
             }
           },
         ]
       );
     } catch (error) {
+      console.error("Erro:", error);
       Alert.alert("Erro", "Não foi possível baixar o documento.");
+      setDownloadingFile(null);
     }
   };
 
