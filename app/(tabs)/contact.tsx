@@ -19,12 +19,35 @@ import {
   type Manager,
   type Team,
 } from "@/data/brokers-data";
+import gestoresData from "@/data/gestores.json";
+
+// Interface para dados de gestores
+interface Gestor {
+  cnpj: string;
+  cod_hap: string;
+  razao_social: string;
+  gestor: string;
+}
+
+const GESTORES: Gestor[] = gestoresData as Gestor[];
 
 // Fotos dos gestores removidas - todos usam ícone padrão para uniformidade
 const MANAGER_PHOTOS: Record<string, any> = {};
 
 // Chave para armazenar executivos cadastrados localmente
 const REGISTERED_EXECUTIVES_KEY = "@registered_executives";
+
+// Funcao para formatar CNPJ
+const formatCNPJ = (cnpj: string): string => {
+  if (!cnpj) return "";
+  const cleaned = cnpj.replace(/\\D/g, "");
+  return cleaned.replace(/^(\\d{2})(\\d{3})(\\d{3})(\\d{4})(\\d{2})$/, "$1.$2.$3/$4-$5");
+};
+
+const searchGestorByCNPJ = (cnpj: string): Gestor | null => {
+  const cleaned = cnpj.replace(/\\D/g, "");
+  return GESTORES.find((g) => g.cnpj === cleaned) || null;
+};
 
 interface RegisteredExecutive {
   id: string;
@@ -89,8 +112,23 @@ export default function ContactScreen() {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (query.length >= 3) {
-      const results = searchBroker(query);
-      setSearchResults(results);
+      const queryLower = query.toLowerCase();
+      const gestorResults = GESTORES.filter(
+        (g) =>
+          g.cnpj.includes(query) ||
+          g.cod_hap.toLowerCase().includes(queryLower) ||
+          g.razao_social.toLowerCase().includes(queryLower) ||
+          g.gestor.toLowerCase().includes(queryLower)
+      ).slice(0, 10);
+      
+      const brokerResults = gestorResults.map((g) => ({
+        name: g.razao_social,
+        cnpj: g.cnpj,
+        code: g.cod_hap,
+        manager: g.gestor,
+      })) as Broker[];
+      
+      setSearchResults(brokerResults);
     } else {
       setSearchResults([]);
     }
