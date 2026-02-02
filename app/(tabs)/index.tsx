@@ -144,7 +144,7 @@ export default function HomeScreen() {
             Tabelas Atualizadas
           </Text>
           <Text className="text-xs text-muted">
-            Valores válidos para contratos assinados de 23/01/2026 a 31/03/2026.
+            Valores válidos para contratos assinados a partir de 01/02/2026.
             Super Simples e PME disponíveis.
           </Text>
         </View>

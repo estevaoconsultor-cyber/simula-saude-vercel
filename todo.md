@@ -159,3 +159,9 @@
 - [x] Corrigir erro de download de arquivos na aba de Regras
 - [x] Fazer upload de todos os documentos para CDN
 - [x] Implementar download direto via URLs públicas
+
+## Fase 18 - Atualizações Fevereiro 2026
+- [x] Atualizar data de validade para 01/02/2026
+- [x] Atualizar comentário de preços para Fevereiro 2026
+- [ ] Corrigir ícones da tab bar no ambiente web
+- [ ] Remover tarjas brancas/pretas no ambiente web

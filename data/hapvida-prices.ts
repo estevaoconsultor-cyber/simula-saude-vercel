@@ -1,4 +1,4 @@
-// Tabelas de preços Hapvida - Atualizado Janeiro 2026
+// Tabelas de preços Hapvida - Atualizado Fevereiro 2026
 // Dados extraídos das tabelas oficiais
 
 export type AgeRange = 
