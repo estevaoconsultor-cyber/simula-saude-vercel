@@ -19,17 +19,9 @@ import {
   type Manager,
   type Team,
 } from "@/data/brokers-data";
-import gestoresData from "@/data/gestores.json";
+import { GESTORES_DATA, type Gestor } from "@/data/gestores";
 
-// Interface para dados de gestores
-interface Gestor {
-  cnpj: string;
-  cod_hap: string;
-  razao_social: string;
-  gestor: string;
-}
-
-const GESTORES: Gestor[] = gestoresData as Gestor[];
+const GESTORES: Gestor[] = GESTORES_DATA;
 
 // Fotos dos gestores removidas - todos usam ícone padrão para uniformidade
 const MANAGER_PHOTOS: Record<string, any> = {};
