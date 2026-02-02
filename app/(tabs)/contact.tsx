@@ -19,9 +19,7 @@ import {
   type Manager,
   type Team,
 } from "@/data/brokers-data";
-import { GESTORES_DATA, type Gestor } from "@/data/gestores";
-
-const GESTORES: Gestor[] = GESTORES_DATA;
+import { loadGestores, searchGestores as searchGestoresAsync, type Gestor } from "@/data/gestores-loader";
 
 // Fotos dos gestores removidas - todos usam ícone padrão para uniformidade
 const MANAGER_PHOTOS: Record<string, any> = {};
@@ -32,13 +30,8 @@ const REGISTERED_EXECUTIVES_KEY = "@registered_executives";
 // Funcao para formatar CNPJ
 const formatCNPJ = (cnpj: string): string => {
   if (!cnpj) return "";
-  const cleaned = cnpj.replace(/\\D/g, "");
-  return cleaned.replace(/^(\\d{2})(\\d{3})(\\d{3})(\\d{4})(\\d{2})$/, "$1.$2.$3/$4-$5");
-};
-
-const searchGestorByCNPJ = (cnpj: string): Gestor | null => {
-  const cleaned = cnpj.replace(/\\D/g, "");
-  return GESTORES.find((g) => g.cnpj === cleaned) || null;
+  const cleaned = cnpj.replace(/\D/g, "");
+  return cleaned.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
 };
 
 interface RegisteredExecutive {
@@ -101,26 +94,22 @@ export default function ContactScreen() {
     }
   };
 
-  const handleSearch = (query: string) => {
+  const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (query.length >= 3) {
-      const queryLower = query.toLowerCase();
-      const gestorResults = GESTORES.filter(
-        (g) =>
-          g.cnpj.includes(query) ||
-          g.cod_hap.toLowerCase().includes(queryLower) ||
-          g.razao_social.toLowerCase().includes(queryLower) ||
-          g.gestor.toLowerCase().includes(queryLower)
-      ).slice(0, 10);
-      
-      const brokerResults = gestorResults.map((g) => ({
-        name: g.razao_social,
-        cnpj: g.cnpj,
-        code: g.cod_hap,
-        manager: g.gestor,
-      })) as Broker[];
-      
-      setSearchResults(brokerResults);
+      try {
+        const gestorResults = await searchGestoresAsync(query);
+        const brokerResults = gestorResults.map((g) => ({
+          name: g.razao_social,
+          cnpj: g.cnpj,
+          code: g.cod_hap,
+          manager: g.gestor,
+        })) as Broker[];
+        setSearchResults(brokerResults);
+      } catch (error) {
+        console.error("Erro ao buscar gestores:", error);
+        setSearchResults([]);
+      }
     } else {
       setSearchResults([]);
     }

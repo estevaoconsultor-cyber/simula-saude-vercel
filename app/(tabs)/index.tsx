@@ -148,6 +148,13 @@ export default function HomeScreen() {
             Super Simples e PME disponíveis.
           </Text>
         </View>
+
+        {/* Versão do App */}
+        <View className="mt-6 items-center">
+          <Text className="text-xs text-muted/50">
+            SimulaSaúde v2.0.2 • Build 20260202
+          </Text>
+        </View>
       </ScrollView>
     </ScreenContainer>
   );
