@@ -213,3 +213,13 @@ Todas as correções e atualizações devem ser refletidas SIMULTANEAMENTE em:
 - [ ] Implementar sistema de cache sincronizado
 - [ ] Configurar build automático para web após cada mudança
 - [ ] Adicionar versionamento de dados para rastreamento
+
+
+## DEPLOY AUTOMÁTICO (CRÍTICO)
+**Status: PENDENTE**
+
+Configurar deploy automático para que:
+- [ ] Toda atualização no app seja automaticamente publicada no web
+- [ ] Não seja necessário clicar em "Publicar" manualmente
+- [ ] Sincronização em tempo real entre app e web
+- [ ] Histórico de versões mantido automaticamente
