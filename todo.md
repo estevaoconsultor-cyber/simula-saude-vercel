@@ -165,3 +165,51 @@
 - [x] Atualizar comentário de preços para Fevereiro 2026
 - [ ] Corrigir ícones da tab bar no ambiente web
 - [ ] Remover tarjas brancas/pretas no ambiente web
+
+## Fase 19 - Correção de Erros Críticos (Em Andamento)
+- [x] Adicionar SMART 150, 200 e 200UP na Rede Própria
+- [ ] Corrigir database de gestores na aba "Pesquisar Gestor"
+- [ ] Corrigir ícones MaterialIcons na tab bar web (aparecem com duas cores)
+- [ ] Integrar materiais de download em "Aproveitamento de Carência"
+
+
+## ESTRUTURA IMUTÁVEL - REDE DE ATENDIMENTO (CONGELADA)
+**Arquivo: /data/network-structure.ts**
+**Status: ✅ CONGELADO - NÃO PODE MUDAR**
+
+### REDE PRÓPRIA (9 produtos fixos):
+1. Nosso Médico
+2. Smart Ambulatorial
+3. Smart Prime
+4. Smart 150
+5. Smart 200
+6. Smart 200 UP
+7. NotreLife
+8. Basic Referência
+9. Pleno
+
+### REDE CREDENCIADA (10 produtos fixos):
+1. Smart 300
+2. Smart 400 Apartamento
+3. Smart 400 Enfermaria
+4. Smart 500 Apartamento
+5. Smart 500 Enfermaria
+6. Advance 600
+7. Advance 700
+8. Premium 900.1 (COM Rede Dor)
+9. Premium 900.1 Care (SEM Rede Dor)
+10. Infinity 1000.1
+
+
+## SINCRONIZAÇÃO APP/WEB (REQUISITO CRÍTICO)
+**Status: EM IMPLEMENTAÇÃO**
+
+Todas as correções e atualizações devem ser refletidas SIMULTANEAMENTE em:
+- ✅ App Mobile (Expo - iOS/Android)
+- ✅ Web (www.simulasaude.app.br)
+
+### Arquivos de Sincronização Centralizada:
+- [ ] Criar arquivo de configuração centralizado para dados compartilhados
+- [ ] Implementar sistema de cache sincronizado
+- [ ] Configurar build automático para web após cada mudança
+- [ ] Adicionar versionamento de dados para rastreamento
