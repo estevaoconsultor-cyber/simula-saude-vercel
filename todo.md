@@ -223,3 +223,10 @@ Configurar deploy automático para que:
 - [ ] Não seja necessário clicar em "Publicar" manualmente
 - [ ] Sincronização em tempo real entre app e web
 - [ ] Histórico de versões mantido automaticamente
+
+
+## BUILD ANDROID E WEB (CRÍTICO)
+- [ ] Fazer build Android com todas as atualizações
+- [ ] Fazer build web com todas as atualizações
+- [ ] Publicar ambas as versões
+- [ ] Validar que as mudanças aparecem em ambas
