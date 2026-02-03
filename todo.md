@@ -240,3 +240,24 @@ Configurar deploy automático para que:
 - [x] Adicionar testes automatizados para PREMIUM 900 CARE e INFINITY
 - [x] Executar todos os 78 testes (100% passando)
 - [x] Verificar visualmente os produtos na interface do simulador
+
+## Fase 21 - Correção Deploy Vercel (03/02/2026)
+- [ ] Verificar sincronização Git com repositório remoto
+- [ ] Forçar rebuild completo no Vercel
+- [ ] Confirmar que TODAS as atualizações aparecem no site publicado
+
+
+## Fase 22 - Correção de Valores das Tabelas (03/02/2026)
+- [ ] Verificar PDFs das tabelas de preços por filial
+- [ ] Corrigir valores do Smart 200UP com coparticipação total
+- [ ] Corrigir valores de todas as outras tabelas por filial
+- [ ] Fazer build e deploy das correções
+- [ ] Verificar valores no site publicado
+
+
+## Fase 23 - Correção Completa da Rede de Atendimento (03/02/2026)
+- [ ] Verificar estrutura atual dos arquivos de rede
+- [ ] Corrigir busca por produto (não retorna resultados)
+- [ ] Corrigir busca por cidade/estado (zerada)
+- [ ] Testar todas as funcionalidades de rede
+- [ ] Fazer build e deploy das correções

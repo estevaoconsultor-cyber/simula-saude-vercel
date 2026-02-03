@@ -284,28 +284,27 @@ describe("Hapvida Prices Data", () => {
       expect(priceCareEnfTotal).toBeGreaterThan(0);
     });
 
-    it("should have Infinity prices in Super Simples MEI tables", () => {
-      // Coparticipação Parcial
-      const priceInfinityParcial = getProductPrice(
+    it("should have Infinity prices in Super Simples Não MEI tables (not in MEI)", () => {
+      // Infinity NÃO existe em MEI, apenas em Não MEI (Demais Empresas)
+      const priceInfinityMEI = getProductPrice(
         "sao-paulo",
         "super-simples-2-29-mei",
         "parcial",
         "infinity-1000-1-total",
         "00-18"
       );
-      expect(priceInfinityParcial).toBeDefined();
-      expect(priceInfinityParcial).toBeGreaterThan(0);
+      expect(priceInfinityMEI).toBeNull(); // Infinity não existe em MEI
 
-      // Coparticipação Total
-      const priceInfinityTotal = getProductPrice(
+      // Infinity existe em Não MEI (Demais Empresas)
+      const priceInfinityNaoMEI = getProductPrice(
         "sao-paulo",
-        "super-simples-2-29-mei",
-        "total",
+        "super-simples-2-29-demais",
+        "parcial",
         "infinity-1000-1-total",
         "00-18"
       );
-      expect(priceInfinityTotal).toBeDefined();
-      expect(priceInfinityTotal).toBeGreaterThan(0);
+      expect(priceInfinityNaoMEI).toBeDefined();
+      expect(priceInfinityNaoMEI).toBeGreaterThan(0);
     });
 
     it("should include Premium 900 Care in Super Simples MEI available products", () => {
@@ -319,15 +318,24 @@ describe("Hapvida Prices Data", () => {
       expect(careProduct).toBeDefined();
     });
 
-    it("should include Infinity in Super Simples MEI available products", () => {
-      const products = getAvailableProducts(
+    it("should NOT include Infinity in Super Simples MEI (only in Não MEI)", () => {
+      // Infinity NÃO deve estar em MEI
+      const productsMEI = getAvailableProducts(
         "sao-paulo",
         "super-simples-2-29-mei",
         "parcial"
       );
+      const infinityInMEI = productsMEI.find((p) => p.id.includes("infinity-1000-1"));
+      expect(infinityInMEI).toBeUndefined();
 
-      const infinityProduct = products.find((p) => p.id.includes("infinity-1000-1"));
-      expect(infinityProduct).toBeDefined();
+      // Infinity DEVE estar em Não MEI (Demais Empresas)
+      const productsNaoMEI = getAvailableProducts(
+        "sao-paulo",
+        "super-simples-2-29-demais",
+        "parcial"
+      );
+      const infinityInNaoMEI = productsNaoMEI.find((p) => p.id.includes("infinity-1000-1"));
+      expect(infinityInNaoMEI).toBeDefined();
     });
 
     it("should have correct price ranges for Premium 900 Care", () => {
@@ -351,17 +359,17 @@ describe("Hapvida Prices Data", () => {
       expect(price59plus!).toBeGreaterThan(price0018!);
     });
 
-    it("should have correct price ranges for Infinity", () => {
+    it("should have correct price ranges for Infinity in Não MEI", () => {
       const price0018 = getProductPrice(
         "sao-paulo",
-        "super-simples-2-29-mei",
+        "super-simples-2-29-demais",
         "total",
         "infinity-1000-1-total",
         "00-18"
       );
       const price59plus = getProductPrice(
         "sao-paulo",
-        "super-simples-2-29-mei",
+        "super-simples-2-29-demais",
         "total",
         "infinity-1000-1-total",
         "59+"
