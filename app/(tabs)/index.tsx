@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScrollView, Text, View, TouchableOpacity } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useSimulation } from "@/contexts/SimulationContext";
@@ -29,9 +29,11 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <View className="items-center mb-6">
-          <View className="w-20 h-20 bg-primary rounded-2xl items-center justify-center mb-3">
-            <Text className="text-4xl">🏥</Text>
-          </View>
+          <Image
+            source={require("@/assets/images/icon.png")}
+            style={{ width: 80, height: 80, borderRadius: 16 }}
+            resizeMode="contain"
+          />
           <Text className="text-2xl font-bold text-foreground text-center">
             Simulador Hapvida
           </Text>

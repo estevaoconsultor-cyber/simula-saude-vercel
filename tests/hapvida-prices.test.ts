@@ -242,4 +242,134 @@ describe("Hapvida Prices Data", () => {
       expect(smart200).toBeDefined();
     });
   });
+
+  describe("Premium 900 Care and Infinity Products", () => {
+    it("should have Premium 900 Care products defined", () => {
+      const careProducts = PRODUCTS.filter((p) => p.id.includes("premium-900-1-care"));
+      expect(careProducts.length).toBeGreaterThanOrEqual(4);
+      expect(careProducts.find((p) => p.id === "premium-900-1-care-enf-total")).toBeDefined();
+      expect(careProducts.find((p) => p.id === "premium-900-1-care-apt-total")).toBeDefined();
+      expect(careProducts.find((p) => p.id === "premium-900-1-care-enf-parcial")).toBeDefined();
+      expect(careProducts.find((p) => p.id === "premium-900-1-care-apt-parcial")).toBeDefined();
+    });
+
+    it("should have Infinity 1000.1 products defined", () => {
+      const infinityProducts = PRODUCTS.filter((p) => p.id.includes("infinity-1000-1"));
+      expect(infinityProducts.length).toBeGreaterThanOrEqual(2);
+      expect(infinityProducts.find((p) => p.id === "infinity-1000-1-total")).toBeDefined();
+      expect(infinityProducts.find((p) => p.id === "infinity-1000-1-parcial")).toBeDefined();
+    });
+
+    it("should have Premium 900 Care prices in Super Simples MEI tables", () => {
+      // Coparticipação Parcial
+      const priceCareEnfParcial = getProductPrice(
+        "sao-paulo",
+        "super-simples-2-29-mei",
+        "parcial",
+        "premium-900-1-care-enf-total",
+        "00-18"
+      );
+      expect(priceCareEnfParcial).toBeDefined();
+      expect(priceCareEnfParcial).toBeGreaterThan(0);
+
+      // Coparticipação Total
+      const priceCareEnfTotal = getProductPrice(
+        "sao-paulo",
+        "super-simples-2-29-mei",
+        "total",
+        "premium-900-1-care-enf-total",
+        "00-18"
+      );
+      expect(priceCareEnfTotal).toBeDefined();
+      expect(priceCareEnfTotal).toBeGreaterThan(0);
+    });
+
+    it("should have Infinity prices in Super Simples MEI tables", () => {
+      // Coparticipação Parcial
+      const priceInfinityParcial = getProductPrice(
+        "sao-paulo",
+        "super-simples-2-29-mei",
+        "parcial",
+        "infinity-1000-1-total",
+        "00-18"
+      );
+      expect(priceInfinityParcial).toBeDefined();
+      expect(priceInfinityParcial).toBeGreaterThan(0);
+
+      // Coparticipação Total
+      const priceInfinityTotal = getProductPrice(
+        "sao-paulo",
+        "super-simples-2-29-mei",
+        "total",
+        "infinity-1000-1-total",
+        "00-18"
+      );
+      expect(priceInfinityTotal).toBeDefined();
+      expect(priceInfinityTotal).toBeGreaterThan(0);
+    });
+
+    it("should include Premium 900 Care in Super Simples MEI available products", () => {
+      const products = getAvailableProducts(
+        "sao-paulo",
+        "super-simples-2-29-mei",
+        "parcial"
+      );
+
+      const careProduct = products.find((p) => p.id.includes("premium-900-1-care"));
+      expect(careProduct).toBeDefined();
+    });
+
+    it("should include Infinity in Super Simples MEI available products", () => {
+      const products = getAvailableProducts(
+        "sao-paulo",
+        "super-simples-2-29-mei",
+        "parcial"
+      );
+
+      const infinityProduct = products.find((p) => p.id.includes("infinity-1000-1"));
+      expect(infinityProduct).toBeDefined();
+    });
+
+    it("should have correct price ranges for Premium 900 Care", () => {
+      const price0018 = getProductPrice(
+        "sao-paulo",
+        "super-simples-2-29-mei",
+        "parcial",
+        "premium-900-1-care-apt-total",
+        "00-18"
+      );
+      const price59plus = getProductPrice(
+        "sao-paulo",
+        "super-simples-2-29-mei",
+        "parcial",
+        "premium-900-1-care-apt-total",
+        "59+"
+      );
+      
+      expect(price0018).toBeDefined();
+      expect(price59plus).toBeDefined();
+      expect(price59plus!).toBeGreaterThan(price0018!);
+    });
+
+    it("should have correct price ranges for Infinity", () => {
+      const price0018 = getProductPrice(
+        "sao-paulo",
+        "super-simples-2-29-mei",
+        "total",
+        "infinity-1000-1-total",
+        "00-18"
+      );
+      const price59plus = getProductPrice(
+        "sao-paulo",
+        "super-simples-2-29-mei",
+        "total",
+        "infinity-1000-1-total",
+        "59+"
+      );
+      
+      expect(price0018).toBeDefined();
+      expect(price59plus).toBeDefined();
+      expect(price59plus!).toBeGreaterThan(price0018!);
+    });
+  });
 });
