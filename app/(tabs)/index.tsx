@@ -29,11 +29,7 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <View className="items-center mb-6">
-          <Image
-            source={require("@/assets/images/icon.png")}
-            style={{ width: 80, height: 80, borderRadius: 16 }}
-            resizeMode="contain"
-          />
+          <Text className="text-6xl mb-3">🏥</Text>
           <Text className="text-2xl font-bold text-foreground text-center">
             Simulador Hapvida
           </Text>
