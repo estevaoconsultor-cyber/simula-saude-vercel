@@ -18,7 +18,7 @@ import { useBrokerAuth } from "@/contexts/BrokerAuthContext";
 export default function LoginScreen() {
   const router = useRouter();
   const colors = useColors();
-  const { login, isLoading } = useBrokerAuth();
+  const { login, enterGuestMode, isLoading } = useBrokerAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -232,10 +232,40 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* Separador */}
+            <View style={{ flexDirection: "row", alignItems: "center", marginTop: 16 }}>
+              <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+              <Text style={{ color: colors.muted, fontSize: 13, marginHorizontal: 12 }}>ou</Text>
+              <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+            </View>
+
+            {/* Botão Acessar sem cadastro */}
+            <TouchableOpacity
+              onPress={async () => {
+                await enterGuestMode();
+                router.replace("/(tabs)");
+              }}
+              style={{
+                borderWidth: 1.5,
+                borderColor: colors.border,
+                borderRadius: 12,
+                padding: 16,
+                alignItems: "center",
+                marginTop: 4,
+              }}
+            >
+              <Text style={{ color: colors.foreground, fontSize: 16, fontWeight: "600" }}>
+                Acessar sem cadastro
+              </Text>
+              <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>
+                Orçamentos salvos apenas neste dispositivo
+              </Text>
+            </TouchableOpacity>
+
             {/* Link para cadastro */}
             <View style={{ alignItems: "center", marginTop: 16 }}>
               <Text style={{ color: colors.muted, fontSize: 14 }}>
-                Ainda não tem conta?
+                Quer salvar orçamentos na nuvem?
               </Text>
               <TouchableOpacity
                 onPress={() => router.push("/register" as any)}

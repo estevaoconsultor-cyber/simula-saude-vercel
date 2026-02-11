@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { trpc } from "@/lib/trpc";
 
 const BROKER_TOKEN_KEY = "@broker_session_token";
+const GUEST_MODE_KEY = "@broker_guest_mode";
 
 export interface BrokerUser {
   id: number;
@@ -20,6 +20,7 @@ interface BrokerAuthState {
   broker: BrokerUser | null;
   token: string | null;
   isAuthenticated: boolean;
+  isGuest: boolean;
   isLoading: boolean;
 }
 
@@ -28,6 +29,7 @@ interface BrokerAuthContextType extends BrokerAuthState {
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  enterGuestMode: () => Promise<void>;
 }
 
 export interface RegisterData {
@@ -55,51 +57,70 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
     broker: null,
     token: null,
     isAuthenticated: false,
+    isGuest: false,
     isLoading: true,
   });
 
   const initialCheckDone = useRef(false);
 
-  // Carregar token salvo ao iniciar
+  // Carregar token salvo ou modo guest ao iniciar
   useEffect(() => {
     if (initialCheckDone.current) return;
     initialCheckDone.current = true;
 
     (async () => {
       try {
+        // Verificar modo guest primeiro
+        const guestMode = await AsyncStorage.getItem(GUEST_MODE_KEY);
+        if (guestMode === "true") {
+          setState({
+            broker: null,
+            token: null,
+            isAuthenticated: false,
+            isGuest: true,
+            isLoading: false,
+          });
+          return;
+        }
+
         const savedToken = await AsyncStorage.getItem(BROKER_TOKEN_KEY);
         if (savedToken) {
           _currentBrokerToken = savedToken;
           setState((prev) => ({ ...prev, token: savedToken }));
 
           // Verificar se o token ainda é válido
-          const response = await fetch(
-            `${getApiUrl()}/api/trpc/broker.me?input=${encodeURIComponent(JSON.stringify({}))}`,
-            {
-              headers: {
-                Authorization: `Bearer ${savedToken}`,
-                "Content-Type": "application/json",
-              },
-              credentials: "include",
-            }
-          );
+          try {
+            const response = await fetch(
+              `${getApiUrl()}/api/trpc/broker.me?input=${encodeURIComponent(JSON.stringify({}))}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${savedToken}`,
+                  "Content-Type": "application/json",
+                },
+                credentials: "include",
+              }
+            );
 
-          if (response.ok) {
-            const data = await response.json();
-            // tRPC batch response format
-            const result = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
-            if (result) {
-              setState({
-                broker: result,
-                token: savedToken,
-                isAuthenticated: true,
-                isLoading: false,
-              });
-              return;
+            if (response.ok) {
+              const data = await response.json();
+              const result = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
+              if (result) {
+                setState({
+                  broker: result,
+                  token: savedToken,
+                  isAuthenticated: true,
+                  isGuest: false,
+                  isLoading: false,
+                });
+                return;
+              }
             }
+          } catch {
+            // Se falhar a conexão com o backend, entrar como guest automaticamente
+            console.warn("[BrokerAuth] Backend indisponível, entrando como visitante");
           }
 
-          // Token inválido, limpar
+          // Token inválido ou backend offline, limpar
           await AsyncStorage.removeItem(BROKER_TOKEN_KEY);
           _currentBrokerToken = null;
         }
@@ -111,6 +132,7 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
         broker: null,
         token: null,
         isAuthenticated: false,
+        isGuest: false,
         isLoading: false,
       });
     })();
@@ -135,18 +157,19 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
       if (result?.success) {
         _currentBrokerToken = result.token;
         await AsyncStorage.setItem(BROKER_TOKEN_KEY, result.token);
+        await AsyncStorage.removeItem(GUEST_MODE_KEY);
 
         setState({
           broker: result.broker,
           token: result.token,
           isAuthenticated: true,
+          isGuest: false,
           isLoading: false,
         });
 
         return { success: true };
       }
 
-      // Extrair mensagem de erro
       const errorData = Array.isArray(data) ? data[0]?.error : data?.error;
       const errorMessage =
         errorData?.json?.message ||
@@ -191,11 +214,13 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
       if (result?.success) {
         _currentBrokerToken = result.token;
         await AsyncStorage.setItem(BROKER_TOKEN_KEY, result.token);
+        await AsyncStorage.removeItem(GUEST_MODE_KEY);
 
         setState({
           broker: result.broker,
           token: result.token,
           isAuthenticated: true,
+          isGuest: false,
           isLoading: false,
         });
 
@@ -229,7 +254,7 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
           },
           credentials: "include",
           body: JSON.stringify({ json: {} }),
-        });
+        }).catch(() => {});
       }
     } catch (error) {
       console.error("[BrokerAuth] Logout error:", error);
@@ -237,11 +262,27 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
 
     _currentBrokerToken = null;
     await AsyncStorage.removeItem(BROKER_TOKEN_KEY);
+    await AsyncStorage.removeItem(GUEST_MODE_KEY);
 
     setState({
       broker: null,
       token: null,
       isAuthenticated: false,
+      isGuest: false,
+      isLoading: false,
+    });
+  }, []);
+
+  const enterGuestMode = useCallback(async () => {
+    await AsyncStorage.setItem(GUEST_MODE_KEY, "true");
+    await AsyncStorage.removeItem(BROKER_TOKEN_KEY);
+    _currentBrokerToken = null;
+
+    setState({
+      broker: null,
+      token: null,
+      isAuthenticated: false,
+      isGuest: true,
       isLoading: false,
     });
   }, []);
@@ -284,6 +325,7 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
         register,
         logout,
         refreshUser,
+        enterGuestMode,
       }}
     >
       {children}
@@ -308,7 +350,7 @@ function getApiUrl(): string {
     if (apiHostname !== hostname) {
       return `${protocol}//${apiHostname}`;
     }
-    // Vercel deploy: same origin
+    // Produção: same origin
     return `${protocol}//${hostname}`;
   }
   return "";

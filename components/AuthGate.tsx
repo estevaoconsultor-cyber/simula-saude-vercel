@@ -6,11 +6,11 @@ import { useColors } from "@/hooks/use-colors";
 
 /**
  * Componente que protege o acesso ao conteúdo.
- * Se o usuário não está autenticado, redireciona para /login.
- * Se está carregando, mostra um spinner.
+ * Permite acesso se autenticado OU em modo guest (visitante).
+ * Se nenhum dos dois, redireciona para /login.
  */
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useBrokerAuth();
+  const { isAuthenticated, isGuest, isLoading } = useBrokerAuth();
   const colors = useColors();
 
   if (isLoading) {
@@ -31,7 +31,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !isGuest) {
     return <Redirect href="/login" />;
   }
 
