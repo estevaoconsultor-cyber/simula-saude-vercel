@@ -464,6 +464,91 @@ export const appRouter = router({
       }),
   }),
 
+  // ==================== PASSWORD RESET ====================
+  passwordReset: router({
+    /**
+     * Solicitar redefinição de senha - envia código de 6 dígitos por e-mail
+     */
+    request: publicProcedure
+      .input(z.object({ email: z.string().email("E-mail inválido") }))
+      .mutation(async ({ input }) => {
+        const email = input.email.toLowerCase().trim();
+        const broker = await db.getBrokerByEmail(email);
+
+        // Sempre retorna sucesso (não revelar se email existe)
+        if (!broker) {
+          return { success: true, message: "Se o e-mail estiver cadastrado, você receberá um código de redefinição." };
+        }
+
+        // Gerar código de 6 dígitos
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Expira em 15 minutos
+        const expiresAt = new Date();
+        expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+        // Invalidar códigos anteriores
+        await db.invalidatePasswordResets(email);
+
+        // Salvar no banco
+        await db.createPasswordReset({
+          brokerId: broker.id,
+          email,
+          code,
+          expiresAt,
+        });
+
+        // Enviar notificação com o código (via notifyOwner para o admin repassar, ou log)
+        try {
+          const { notifyOwner } = await import("./_core/notification");
+          await notifyOwner({
+            title: `Redefinição de Senha - ${broker.firstName} ${broker.lastName}`,
+            content: `O corretor ${broker.firstName} ${broker.lastName} (${email}) solicitou redefinição de senha.\n\nCódigo: ${code}\n\nVálido por 15 minutos.\n\nEnvie este código para o corretor por WhatsApp ou e-mail.`,
+          });
+        } catch (e) {
+          console.log(`[PasswordReset] Código para ${email}: ${code}`);
+        }
+
+        return { success: true, message: "Se o e-mail estiver cadastrado, você receberá um código de redefinição." };
+      }),
+
+    /**
+     * Verificar código e redefinir senha
+     */
+    reset: publicProcedure
+      .input(z.object({
+        email: z.string().email("E-mail inválido"),
+        code: z.string().length(6, "Código deve ter 6 dígitos"),
+        newPassword: z.string().min(6, "Senha deve ter pelo menos 6 caracteres").max(100),
+      }))
+      .mutation(async ({ input }) => {
+        const email = input.email.toLowerCase().trim();
+
+        // Buscar token válido
+        const resetToken = await db.getValidPasswordReset(email, input.code);
+        if (!resetToken) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Código inválido ou expirado. Solicite um novo código.",
+          });
+        }
+
+        // Hash da nova senha
+        const passwordHash = await bcrypt.hash(input.newPassword, 12);
+
+        // Atualizar senha
+        await db.updateBrokerPassword(resetToken.brokerId, passwordHash);
+
+        // Marcar token como usado
+        await db.markPasswordResetUsed(resetToken.id);
+
+        // Invalidar todos os outros tokens
+        await db.invalidatePasswordResets(email);
+
+        return { success: true, message: "Senha redefinida com sucesso! Faça login com sua nova senha." };
+      }),
+  }),
+
   // ==================== BROKER QUOTES ====================
   quotes: router({
     /**

@@ -18,6 +18,9 @@ import {
   accessLogs,
   InsertAccessLog,
   AccessLog,
+  passwordResets,
+  InsertPasswordReset,
+  PasswordReset,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -550,4 +553,77 @@ export async function countActiveBrokers(): Promise<number> {
     .where(eq(brokers.isActive, true));
 
   return result[0]?.count ?? 0;
+}
+
+// ==================== PASSWORD RESETS ====================
+
+/**
+ * Criar token de redefinição de senha
+ */
+export async function createPasswordReset(data: InsertPasswordReset): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(passwordResets).values(data);
+  return Number(result[0].insertId);
+}
+
+/**
+ * Buscar token de reset válido (não usado e não expirado)
+ */
+export async function getValidPasswordReset(email: string, code: string): Promise<PasswordReset | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const now = new Date();
+  const result = await db
+    .select()
+    .from(passwordResets)
+    .where(
+      and(
+        eq(passwordResets.email, email),
+        eq(passwordResets.code, code),
+        eq(passwordResets.used, false),
+        gte(passwordResets.expiresAt, now)
+      )
+    )
+    .orderBy(desc(passwordResets.createdAt))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Marcar token de reset como usado
+ */
+export async function markPasswordResetUsed(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(passwordResets).set({ used: true }).where(eq(passwordResets.id, id));
+}
+
+/**
+ * Atualizar senha do corretor
+ */
+export async function updateBrokerPassword(brokerId: number, passwordHash: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(brokers).set({ passwordHash }).where(eq(brokers.id, brokerId));
+}
+
+/**
+ * Invalidar todos os tokens de reset pendentes de um email
+ */
+export async function invalidatePasswordResets(email: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.update(passwordResets).set({ used: true }).where(
+    and(
+      eq(passwordResets.email, email),
+      eq(passwordResets.used, false)
+    )
+  );
 }

@@ -215,6 +215,23 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
+            {/* Link Esqueci minha senha */}
+            <View style={{ alignItems: "center", marginTop: 12 }}>
+              <TouchableOpacity
+                onPress={() => router.push("/forgot-password" as any)}
+              >
+                <Text
+                  style={{
+                    color: colors.primary,
+                    fontSize: 14,
+                    fontWeight: "500",
+                  }}
+                >
+                  Esqueci minha senha
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             {/* Link para cadastro */}
             <View style={{ alignItems: "center", marginTop: 16 }}>
               <Text style={{ color: colors.muted, fontSize: 14 }}>

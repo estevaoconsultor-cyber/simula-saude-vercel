@@ -282,3 +282,19 @@ Configurar deploy automático para que:
 - [x] 15 testes automatizados passando (broker-auth.test.ts)
 - [ ] Atualizar data do site para 10/02/2026
 - [ ] Deploy completo (servidor + frontend)
+
+## Fase 26 - Redefinição de Senha
+- [ ] API: solicitar reset de senha (envia código por e-mail)
+- [ ] API: verificar código e redefinir senha
+- [ ] Tabela password_resets no banco
+- [ ] Tela "Esqueci minha senha" (input de e-mail)
+- [ ] Tela "Redefinir senha" (input de código + nova senha)
+- [ ] Botão "Esqueci minha senha" na tela de login
+
+## Fase 26 - Redefinição de Senha
+- [x] Tabela password_resets no banco (email, código, expiração)
+- [x] API: solicitar reset de senha (gera código de 6 dígitos, envia via notifyOwner)
+- [x] API: verificar código e redefinir senha
+- [x] Tela "Esqueci minha senha" (input de e-mail)
+- [x] Tela "Redefinir senha" (input de código + nova senha)
+- [x] Botão "Esqueci minha senha" na tela de login

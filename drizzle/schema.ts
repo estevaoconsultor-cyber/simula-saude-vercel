@@ -121,3 +121,21 @@ export const accessLogs = mysqlTable("access_logs", {
 
 export type AccessLog = typeof accessLogs.$inferSelect;
 export type InsertAccessLog = typeof accessLogs.$inferInsert;
+
+/**
+ * Tokens de redefinição de senha
+ */
+export const passwordResets = mysqlTable("password_resets", {
+  id: int("id").autoincrement().primaryKey(),
+  brokerId: int("brokerId").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  /** Código de 6 dígitos */
+  code: varchar("code", { length: 6 }).notNull(),
+  /** Expiração (15 minutos) */
+  expiresAt: timestamp("expiresAt").notNull(),
+  used: boolean("used").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PasswordReset = typeof passwordResets.$inferSelect;
+export type InsertPasswordReset = typeof passwordResets.$inferInsert;
