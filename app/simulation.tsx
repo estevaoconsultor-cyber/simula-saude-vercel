@@ -276,21 +276,36 @@ export default function SimulationScreen() {
       const token = getBrokerToken();
       if (token) {
         try {
-          await fetch(`${getSimApiUrl()}/api/trpc/quotes.save`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({
-              json: {
+          if (isSimProduction()) {
+            await fetch(`/api/auth/save-quote`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
                 companyName: companyName.trim(),
                 expectedDate: expectedDate.trim(),
                 quoteData: newSimulation,
+              }),
+            });
+          } else {
+            await fetch(`${getSimApiUrl()}/api/trpc/quotes.save`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
               },
-            }),
-          });
+              credentials: "include",
+              body: JSON.stringify({
+                json: {
+                  companyName: companyName.trim(),
+                  expectedDate: expectedDate.trim(),
+                  quoteData: newSimulation,
+                },
+              }),
+            });
+          }
         } catch (e) {
           // Falha silenciosa no servidor, já salvou localmente
           console.warn("Erro ao salvar no servidor:", e);
@@ -1290,4 +1305,12 @@ function getSimApiUrl(): string {
     return `${protocol}//${hostname}`;
   }
   return "";
+}
+
+function isSimProduction(): boolean {
+  if (typeof window !== "undefined" && window.location) {
+    const { hostname } = window.location;
+    return !hostname.includes("manus.computer") && hostname !== "localhost";
+  }
+  return false;
 }

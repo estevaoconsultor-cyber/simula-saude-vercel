@@ -26,6 +26,14 @@ function getApiUrl(): string {
   return "";
 }
 
+function isProduction(): boolean {
+  if (typeof window !== "undefined" && window.location) {
+    const { hostname } = window.location;
+    return !hostname.includes("manus.computer") && hostname !== "localhost";
+  }
+  return false;
+}
+
 type Step = "email" | "code" | "success";
 
 export default function ForgotPasswordScreen() {
@@ -51,21 +59,39 @@ export default function ForgotPasswordScreen() {
 
     setSubmitting(true);
     try {
-      const response = await fetch(`${getApiUrl()}/api/trpc/passwordReset.request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ json: { email: email.trim().toLowerCase() } }),
-      });
+      let success = false;
 
-      const data = await response.json();
-      const result = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
+      if (isProduction()) {
+        const response = await fetch(`/api/auth/password-reset-request`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          success = true;
+        } else {
+          setErrorMessage(data.error || "Erro ao solicitar redefinição.");
+        }
+      } else {
+        const response = await fetch(`${getApiUrl()}/api/trpc/passwordReset.request`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ json: { email: email.trim().toLowerCase() } }),
+        });
+        const data = await response.json();
+        const result = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
+        if (result?.success) {
+          success = true;
+        } else {
+          const errorData = Array.isArray(data) ? data[0]?.error : data?.error;
+          setErrorMessage(errorData?.json?.message || "Erro ao solicitar redefinição.");
+        }
+      }
 
-      if (result?.success) {
+      if (success) {
         setSuccessMessage("Se o e-mail estiver cadastrado, você receberá um código de redefinição. Verifique seu e-mail ou entre em contato com o suporte.");
         setStep("code");
-      } else {
-        const errorData = Array.isArray(data) ? data[0]?.error : data?.error;
-        setErrorMessage(errorData?.json?.message || "Erro ao solicitar redefinição.");
       }
     } catch (error) {
       setErrorMessage("Erro de conexão. Tente novamente.");
@@ -92,26 +118,48 @@ export default function ForgotPasswordScreen() {
 
     setSubmitting(true);
     try {
-      const response = await fetch(`${getApiUrl()}/api/trpc/passwordReset.reset`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          json: {
+      let success = false;
+
+      if (isProduction()) {
+        const response = await fetch(`/api/auth/password-reset`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             email: email.trim().toLowerCase(),
             code: code.trim(),
             newPassword,
-          },
-        }),
-      });
-
-      const data = await response.json();
-      const result = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
-
-      if (result?.success) {
-        setStep("success");
+          }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          success = true;
+        } else {
+          setErrorMessage(data.error || "Código inválido ou expirado.");
+        }
       } else {
-        const errorData = Array.isArray(data) ? data[0]?.error : data?.error;
-        setErrorMessage(errorData?.json?.message || "Código inválido ou expirado.");
+        const response = await fetch(`${getApiUrl()}/api/trpc/passwordReset.reset`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            json: {
+              email: email.trim().toLowerCase(),
+              code: code.trim(),
+              newPassword,
+            },
+          }),
+        });
+        const data = await response.json();
+        const result = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
+        if (result?.success) {
+          success = true;
+        } else {
+          const errorData = Array.isArray(data) ? data[0]?.error : data?.error;
+          setErrorMessage(errorData?.json?.message || "Código inválido ou expirado.");
+        }
+      }
+
+      if (success) {
+        setStep("success");
       }
     } catch (error) {
       setErrorMessage("Erro de conexão. Tente novamente.");
@@ -325,7 +373,7 @@ export default function ForgotPasswordScreen() {
                   style={{
                     backgroundColor: colors.surface,
                     borderWidth: 1,
-                    borderColor: confirmPassword && newPassword !== confirmPassword ? colors.error : colors.border,
+                    borderColor: colors.border,
                     borderRadius: 12,
                     padding: 14,
                     fontSize: 16,
@@ -339,8 +387,6 @@ export default function ForgotPasswordScreen() {
                   placeholder="Repita a nova senha"
                   placeholderTextColor={colors.muted}
                   secureTextEntry={!showPassword}
-                  returnKeyType="done"
-                  onSubmitEditing={handleResetPassword}
                 />
               </View>
 
@@ -384,8 +430,8 @@ export default function ForgotPasswordScreen() {
                 }}
                 style={{ alignItems: "center", marginTop: 8 }}
               >
-                <Text style={{ color: colors.muted, fontSize: 14 }}>
-                  Reenviar código
+                <Text style={{ color: colors.primary, fontSize: 14 }}>
+                  ← Voltar para e-mail
                 </Text>
               </TouchableOpacity>
             </View>
@@ -394,24 +440,9 @@ export default function ForgotPasswordScreen() {
           {/* Step: Success */}
           {step === "success" && (
             <View style={{ gap: 16 }}>
-              <View
-                style={{
-                  backgroundColor: `${colors.success}15`,
-                  borderRadius: 12,
-                  padding: 20,
-                  alignItems: "center",
-                }}
-              >
-                <Text style={{ fontSize: 48, marginBottom: 8 }}>✅</Text>
-                <Text
-                  style={{
-                    color: colors.success,
-                    fontSize: 16,
-                    fontWeight: "600",
-                    textAlign: "center",
-                  }}
-                >
-                  Senha redefinida com sucesso!
+              <View style={{ backgroundColor: `${colors.success}15`, borderRadius: 12, padding: 16 }}>
+                <Text style={{ color: colors.success, fontSize: 16, textAlign: "center", fontWeight: "600" }}>
+                  ✅ Senha alterada com sucesso!
                 </Text>
               </View>
 
@@ -426,18 +457,18 @@ export default function ForgotPasswordScreen() {
                 }}
               >
                 <Text style={{ color: "#FFF", fontSize: 16, fontWeight: "bold" }}>
-                  Ir para Login
+                  Fazer Login
                 </Text>
               </TouchableOpacity>
             </View>
           )}
 
-          {/* Link voltar ao login */}
+          {/* Voltar ao login */}
           {step !== "success" && (
             <View style={{ alignItems: "center", marginTop: 24 }}>
               <TouchableOpacity onPress={() => router.back()}>
-                <Text style={{ color: colors.primary, fontSize: 14, fontWeight: "600" }}>
-                  ← Voltar ao Login
+                <Text style={{ color: colors.primary, fontSize: 14 }}>
+                  ← Voltar ao login
                 </Text>
               </TouchableOpacity>
             </View>

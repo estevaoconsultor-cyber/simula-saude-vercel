@@ -42,24 +42,42 @@ export default function AccountScreen() {
 
     setLoadingSessions(true);
     try {
-      const response = await fetch(
-        `${getApiUrl()}/api/trpc/broker.sessions?input=${encodeURIComponent(JSON.stringify({}))}`,
-        {
+      let sessionsData: DeviceSession[] = [];
+
+      if (isProduction()) {
+        const response = await fetch(`/api/auth/sessions`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data.sessions)) {
+            sessionsData = data.sessions;
+          }
         }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const result = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
-        if (Array.isArray(result)) {
-          setSessions(result);
+      } else {
+        const response = await fetch(
+          `${getApiUrl()}/api/trpc/broker.sessions?input=${encodeURIComponent(JSON.stringify({}))}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const result = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
+          if (Array.isArray(result)) {
+            sessionsData = result;
+          }
         }
       }
+
+      setSessions(sessionsData);
     } catch (error) {
       console.error("Error fetching sessions:", error);
     } finally {
@@ -88,15 +106,26 @@ export default function AccountScreen() {
           onPress: async () => {
             setRevokingId(sessionId);
             try {
-              await fetch(`${getApiUrl()}/api/trpc/broker.revokeSession`, {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({ json: { sessionId } }),
-              });
+              if (isProduction()) {
+                await fetch(`/api/auth/sessions`, {
+                  method: "DELETE",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ sessionId }),
+                });
+              } else {
+                await fetch(`${getApiUrl()}/api/trpc/broker.revokeSession`, {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                  credentials: "include",
+                  body: JSON.stringify({ json: { sessionId } }),
+                });
+              }
               await fetchSessions();
             } catch (error) {
               console.error("Error revoking session:", error);
@@ -338,6 +367,14 @@ function getApiUrl(): string {
     return `${protocol}//${hostname}`;
   }
   return "";
+}
+
+function isProduction(): boolean {
+  if (typeof window !== "undefined" && window.location) {
+    const { hostname } = window.location;
+    return !hostname.includes("manus.computer") && hostname !== "localhost";
+  }
+  return false;
 }
 
 const styles = StyleSheet.create({

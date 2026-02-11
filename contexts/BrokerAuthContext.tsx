@@ -52,6 +52,30 @@ export function getBrokerToken(): string | null {
   return _currentBrokerToken;
 }
 
+// Helper para obter a URL base da API
+function getApiUrl(): string {
+  if (typeof window !== "undefined" && window.location) {
+    const { protocol, hostname } = window.location;
+    // Dev sandbox: 8081-xxx -> 3000-xxx (para tRPC legado)
+    const apiHostname = hostname.replace(/^8081-/, "3000-");
+    if (apiHostname !== hostname) {
+      return `${protocol}//${apiHostname}`;
+    }
+    // Produção no Vercel: same origin (usa /api/auth/* serverless functions)
+    return "";
+  }
+  return "";
+}
+
+// Detectar se estamos em produção (Vercel) ou dev (sandbox)
+function isProduction(): boolean {
+  if (typeof window !== "undefined" && window.location) {
+    const { hostname } = window.location;
+    return !hostname.includes("manus.computer") && hostname !== "localhost";
+  }
+  return false;
+}
+
 export function BrokerAuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<BrokerAuthState>({
     broker: null,
@@ -90,33 +114,49 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
 
           // Verificar se o token ainda é válido
           try {
-            const response = await fetch(
-              `${getApiUrl()}/api/trpc/broker.me?input=${encodeURIComponent(JSON.stringify({}))}`,
-              {
+            let brokerData: BrokerUser | null = null;
+
+            if (isProduction()) {
+              // Produção: usar Vercel serverless function
+              const response = await fetch(`/api/auth/me`, {
                 headers: {
                   Authorization: `Bearer ${savedToken}`,
                   "Content-Type": "application/json",
                 },
-                credentials: "include",
+              });
+              if (response.ok) {
+                const data = await response.json();
+                brokerData = data.broker || null;
               }
-            );
-
-            if (response.ok) {
-              const data = await response.json();
-              const result = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
-              if (result) {
-                setState({
-                  broker: result,
-                  token: savedToken,
-                  isAuthenticated: true,
-                  isGuest: false,
-                  isLoading: false,
-                });
-                return;
+            } else {
+              // Dev: usar tRPC
+              const response = await fetch(
+                `${getApiUrl()}/api/trpc/broker.me?input=${encodeURIComponent(JSON.stringify({}))}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${savedToken}`,
+                    "Content-Type": "application/json",
+                  },
+                  credentials: "include",
+                }
+              );
+              if (response.ok) {
+                const data = await response.json();
+                brokerData = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
               }
             }
+
+            if (brokerData) {
+              setState({
+                broker: brokerData,
+                token: savedToken,
+                isAuthenticated: true,
+                isGuest: false,
+                isLoading: false,
+              });
+              return;
+            }
           } catch {
-            // Se falhar a conexão com o backend, entrar como guest automaticamente
             console.warn("[BrokerAuth] Backend indisponível, entrando como visitante");
           }
 
@@ -140,19 +180,43 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
 
   const login = useCallback(async (email: string, password: string) => {
     try {
-      const response = await fetch(`${getApiUrl()}/api/trpc/broker.login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          json: { email: email.toLowerCase(), password },
-        }),
-      });
+      let result: any = null;
+      let errorMessage = "Erro ao fazer login. Tente novamente.";
 
-      const data = await response.json();
-      const result = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
+      if (isProduction()) {
+        // Produção: usar Vercel serverless function
+        const response = await fetch(`/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.toLowerCase(), password }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          result = data;
+        } else {
+          errorMessage = data.error || errorMessage;
+        }
+      } else {
+        // Dev: usar tRPC
+        const response = await fetch(`${getApiUrl()}/api/trpc/broker.login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            json: { email: email.toLowerCase(), password },
+          }),
+        });
+
+        const data = await response.json();
+        const trpcResult = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
+        if (trpcResult?.success) {
+          result = trpcResult;
+        } else {
+          const errorData = Array.isArray(data) ? data[0]?.error : data?.error;
+          errorMessage = errorData?.json?.message || errorData?.message || errorMessage;
+        }
+      }
 
       if (result?.success) {
         _currentBrokerToken = result.token;
@@ -169,12 +233,6 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
 
         return { success: true };
       }
-
-      const errorData = Array.isArray(data) ? data[0]?.error : data?.error;
-      const errorMessage =
-        errorData?.json?.message ||
-        errorData?.message ||
-        "Erro ao fazer login. Tente novamente.";
 
       return { success: false, error: errorMessage };
     } catch (error: any) {
@@ -188,14 +246,15 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
 
   const register = useCallback(async (registerData: RegisterData) => {
     try {
-      const response = await fetch(`${getApiUrl()}/api/trpc/broker.register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          json: {
+      let result: any = null;
+      let errorMessage = "Erro ao cadastrar. Tente novamente.";
+
+      if (isProduction()) {
+        // Produção: usar Vercel serverless function
+        const response = await fetch(`/api/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             firstName: registerData.firstName,
             lastName: registerData.lastName,
             email: registerData.email.toLowerCase(),
@@ -204,12 +263,44 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
             sellerCode: registerData.sellerCode || null,
             brokerageCode: registerData.brokerageCode || null,
             brokerageName: registerData.brokerageName || null,
-          },
-        }),
-      });
+          }),
+        });
 
-      const data = await response.json();
-      const result = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
+        const data = await response.json();
+        if (data.success) {
+          result = data;
+        } else {
+          errorMessage = data.error || errorMessage;
+        }
+      } else {
+        // Dev: usar tRPC
+        const response = await fetch(`${getApiUrl()}/api/trpc/broker.register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            json: {
+              firstName: registerData.firstName,
+              lastName: registerData.lastName,
+              email: registerData.email.toLowerCase(),
+              password: registerData.password,
+              profile: registerData.profile,
+              sellerCode: registerData.sellerCode || null,
+              brokerageCode: registerData.brokerageCode || null,
+              brokerageName: registerData.brokerageName || null,
+            },
+          }),
+        });
+
+        const data = await response.json();
+        const trpcResult = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
+        if (trpcResult?.success) {
+          result = trpcResult;
+        } else {
+          const errorData = Array.isArray(data) ? data[0]?.error : data?.error;
+          errorMessage = errorData?.json?.message || errorData?.message || errorMessage;
+        }
+      }
 
       if (result?.success) {
         _currentBrokerToken = result.token;
@@ -226,12 +317,6 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
 
         return { success: true };
       }
-
-      const errorData = Array.isArray(data) ? data[0]?.error : data?.error;
-      const errorMessage =
-        errorData?.json?.message ||
-        errorData?.message ||
-        "Erro ao cadastrar. Tente novamente.";
 
       return { success: false, error: errorMessage };
     } catch (error: any) {
@@ -246,15 +331,25 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
   const logout = useCallback(async () => {
     try {
       if (_currentBrokerToken) {
-        await fetch(`${getApiUrl()}/api/trpc/broker.logout`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${_currentBrokerToken}`,
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ json: {} }),
-        }).catch(() => {});
+        if (isProduction()) {
+          await fetch(`/api/auth/logout`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${_currentBrokerToken}`,
+              "Content-Type": "application/json",
+            },
+          }).catch(() => {});
+        } else {
+          await fetch(`${getApiUrl()}/api/trpc/broker.logout`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${_currentBrokerToken}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({ json: {} }),
+          }).catch(() => {});
+        }
       }
     } catch (error) {
       console.error("[BrokerAuth] Logout error:", error);
@@ -291,26 +386,41 @@ export function BrokerAuthProvider({ children }: { children: React.ReactNode }) 
     if (!_currentBrokerToken) return;
 
     try {
-      const response = await fetch(
-        `${getApiUrl()}/api/trpc/broker.me?input=${encodeURIComponent(JSON.stringify({}))}`,
-        {
+      let brokerData: BrokerUser | null = null;
+
+      if (isProduction()) {
+        const response = await fetch(`/api/auth/me`, {
           headers: {
             Authorization: `Bearer ${_currentBrokerToken}`,
             "Content-Type": "application/json",
           },
-          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          brokerData = data.broker || null;
         }
-      );
+      } else {
+        const response = await fetch(
+          `${getApiUrl()}/api/trpc/broker.me?input=${encodeURIComponent(JSON.stringify({}))}`,
+          {
+            headers: {
+              Authorization: `Bearer ${_currentBrokerToken}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          brokerData = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
+        }
+      }
 
-      if (response.ok) {
-        const data = await response.json();
-        const result = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
-        if (result) {
-          setState((prev) => ({
-            ...prev,
-            broker: result,
-          }));
-        }
+      if (brokerData) {
+        setState((prev) => ({
+          ...prev,
+          broker: brokerData,
+        }));
       }
     } catch (error) {
       console.error("[BrokerAuth] Refresh error:", error);
@@ -339,19 +449,4 @@ export function useBrokerAuth() {
     throw new Error("useBrokerAuth must be used within a BrokerAuthProvider");
   }
   return context;
-}
-
-// Helper para obter a URL da API
-function getApiUrl(): string {
-  if (typeof window !== "undefined" && window.location) {
-    const { protocol, hostname } = window.location;
-    // Pattern: 8081-sandboxid.region.domain -> 3000-sandboxid.region.domain
-    const apiHostname = hostname.replace(/^8081-/, "3000-");
-    if (apiHostname !== hostname) {
-      return `${protocol}//${apiHostname}`;
-    }
-    // Produção: same origin
-    return `${protocol}//${hostname}`;
-  }
-  return "";
 }

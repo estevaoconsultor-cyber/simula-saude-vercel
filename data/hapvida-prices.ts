@@ -202,8 +202,10 @@ export type ContractType =
   | "super-simples-1-vida"
   | "super-simples-2-29-mei"
   | "super-simples-2-29-demais"
+  | "super-simples-2-29-demais-pracas"
   | "pme-30-99-compulsorio"
-  | "pme-30-99-adesao";
+  | "pme-30-99-adesao"
+  | "pme-30-99-demais-pracas";
 
 export const CONTRACT_TYPES: { id: ContractType; name: string; description: string; minLives: number; maxLives: number }[] = [
   { id: "super-simples-1-vida", name: "Super Simples 1 Vida", description: "Para empresas com 1 vida", minLives: 1, maxLives: 1 },
@@ -211,6 +213,8 @@ export const CONTRACT_TYPES: { id: ContractType; name: string; description: stri
   { id: "super-simples-2-29-demais", name: "Super Simples Demais Empresas (2-29 vidas)", description: "Demais classificações de CNPJ", minLives: 2, maxLives: 29 },
   { id: "pme-30-99-compulsorio", name: "PME Compulsório (30-99 vidas)", description: "Contratação obrigatória", minLives: 30, maxLives: 99 },
   { id: "pme-30-99-adesao", name: "PME Adesão (30-99 vidas)", description: "Contratação não obrigatória", minLives: 30, maxLives: 99 },
+  { id: "super-simples-2-29-demais-pracas", name: "Super Simples Demais Praças (2-29 vidas)", description: "Demais praças - classificações de CNPJ", minLives: 2, maxLives: 29 },
+  { id: "pme-30-99-demais-pracas", name: "PME Demais Praças (30-99 vidas)", description: "PME para demais praças", minLives: 30, maxLives: 99 },
 ];
 
 export type CoparticipationType = "parcial" | "total";
@@ -5969,7 +5973,9 @@ const JUNDIAI_PME_ADESAO_TOTAL: Record<string, PriceTable> = {
 
 // ===== ESTRUTURA PRINCIPAL DE PREÇOS =====
 
-export const PRICES: Record<City, Record<ContractType, Record<CoparticipationType, Record<string, PriceTable>>>> = {
+// Grupo 1 (SP, Jundiaí, Mogi, Santos, SBC): SS 1 Vida, MEI, Demais Empresas, PME Compulsório, PME Adesão
+// Grupo 2 (Americana, Campinas, Sorocaba, SJC, Rio): SS 1 Vida, SS Demais Praças, PME Demais Praças
+export const PRICES: Record<City, Partial<Record<ContractType, Record<CoparticipationType, Record<string, PriceTable>>>>> = {
   "sao-paulo": {
     "super-simples-1-vida": {
       "parcial": SAO_PAULO_SS1V_PARCIAL,
@@ -5997,19 +6003,11 @@ export const PRICES: Record<City, Record<ContractType, Record<CoparticipationTyp
       "parcial": CAMPINAS_SS1V_PARCIAL,
       "total": CAMPINAS_SS1V_TOTAL,
     },
-    "super-simples-2-29-mei": {
-      "parcial": CAMPINAS_SUPER_SIMPLES_2_29_MEI_PARCIAL,
-      "total": CAMPINAS_SUPER_SIMPLES_2_29_MEI_TOTAL,
+    "super-simples-2-29-demais-pracas": {
+      "parcial": CAMPINAS_SS2A29_PRACAS_PARCIAL,
+      "total": CAMPINAS_SS2A29_PRACAS_TOTAL,
     },
-    "super-simples-2-29-demais": {
-      "parcial": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_PARCIAL, // Fallback
-      "total": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_TOTAL, // Fallback
-    },
-    "pme-30-99-compulsorio": {
-      "parcial": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_PARCIAL, // Fallback
-      "total": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_TOTAL, // Fallback
-    },
-    "pme-30-99-adesao": {
+    "pme-30-99-demais-pracas": {
       "parcial": CAMPINAS_PME_DEMAIS_PARCIAL,
       "total": CAMPINAS_PME_DEMAIS_TOTAL,
     },
@@ -6107,19 +6105,11 @@ export const PRICES: Record<City, Record<ContractType, Record<CoparticipationTyp
       "parcial": SOROCABA_SS1V_PARCIAL,
       "total": SOROCABA_SS1V_TOTAL,
     },
-    "super-simples-2-29-mei": {
-      "parcial": SOROCABA_SUPER_SIMPLES_2_29_MEI_PARCIAL,
-      "total": SOROCABA_SUPER_SIMPLES_2_29_MEI_TOTAL,
+    "super-simples-2-29-demais-pracas": {
+      "parcial": SOROCABA_SS2A29_PRACAS_PARCIAL,
+      "total": SOROCABA_SS2A29_PRACAS_TOTAL,
     },
-    "super-simples-2-29-demais": {
-      "parcial": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_PARCIAL, // Fallback
-      "total": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_TOTAL, // Fallback
-    },
-    "pme-30-99-compulsorio": {
-      "parcial": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_PARCIAL, // Fallback
-      "total": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_TOTAL, // Fallback
-    },
-    "pme-30-99-adesao": {
+    "pme-30-99-demais-pracas": {
       "parcial": SOROCABA_PME_DEMAIS_PARCIAL,
       "total": SOROCABA_PME_DEMAIS_TOTAL,
     },
@@ -6129,19 +6119,11 @@ export const PRICES: Record<City, Record<ContractType, Record<CoparticipationTyp
       "parcial": AMERICANA_SS1V_PARCIAL,
       "total": AMERICANA_SS1V_TOTAL,
     },
-    "super-simples-2-29-mei": {
-      "parcial": AMERICANA_SUPER_SIMPLES_2_29_MEI_PARCIAL,
-      "total": AMERICANA_SUPER_SIMPLES_2_29_MEI_TOTAL,
+    "super-simples-2-29-demais-pracas": {
+      "parcial": AMERICANA_SS2A29_PRACAS_PARCIAL,
+      "total": AMERICANA_SS2A29_PRACAS_TOTAL,
     },
-    "super-simples-2-29-demais": {
-      "parcial": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_PARCIAL, // Fallback
-      "total": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_TOTAL, // Fallback
-    },
-    "pme-30-99-compulsorio": {
-      "parcial": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_PARCIAL, // Fallback
-      "total": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_TOTAL, // Fallback
-    },
-    "pme-30-99-adesao": {
+    "pme-30-99-demais-pracas": {
       "parcial": AMERICANA_PME_DEMAIS_PARCIAL,
       "total": AMERICANA_PME_DEMAIS_TOTAL,
     },
@@ -6151,19 +6133,11 @@ export const PRICES: Record<City, Record<ContractType, Record<CoparticipationTyp
       "parcial": SAO_JOSE_DOS_CAMPOS_SS1V_PARCIAL,
       "total": SAO_JOSE_DOS_CAMPOS_SS1V_TOTAL,
     },
-    "super-simples-2-29-mei": {
-      "parcial": SAO_JOSE_DOS_CAMPOS_SUPER_SIMPLES_2_29_MEI_PARCIAL,
-      "total": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_TOTAL, // Fallback
+    "super-simples-2-29-demais-pracas": {
+      "parcial": SJC_SS2A29_PRACAS_PARCIAL,
+      "total": SJC_SS2A29_PRACAS_TOTAL,
     },
-    "super-simples-2-29-demais": {
-      "parcial": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_PARCIAL, // Fallback
-      "total": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_TOTAL, // Fallback
-    },
-    "pme-30-99-compulsorio": {
-      "parcial": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_PARCIAL, // Fallback
-      "total": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_TOTAL, // Fallback
-    },
-    "pme-30-99-adesao": {
+    "pme-30-99-demais-pracas": {
       "parcial": SAO_JOSE_DOS_CAMPOS_PME_DEMAIS_PARCIAL,
       "total": SAO_JOSE_DOS_CAMPOS_PME_DEMAIS_TOTAL,
     },
@@ -6173,19 +6147,11 @@ export const PRICES: Record<City, Record<ContractType, Record<CoparticipationTyp
       "parcial": RIO_DE_JANEIRO_SS1V_PARCIAL,
       "total": RIO_DE_JANEIRO_SS1V_TOTAL,
     },
-    "super-simples-2-29-mei": {
-      "parcial": RIO_DE_JANEIRO_SUPER_SIMPLES_2_29_MEI_PARCIAL,
-      "total": RIO_DE_JANEIRO_SUPER_SIMPLES_2_29_MEI_TOTAL,
+    "super-simples-2-29-demais-pracas": {
+      "parcial": RIO_SS2A29_PRACAS_PARCIAL,
+      "total": RIO_SS2A29_PRACAS_TOTAL,
     },
-    "super-simples-2-29-demais": {
-      "parcial": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_PARCIAL, // Fallback
-      "total": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_TOTAL, // Fallback
-    },
-    "pme-30-99-compulsorio": {
-      "parcial": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_PARCIAL, // Fallback
-      "total": SAO_PAULO_SUPER_SIMPLES_2_29_MEI_TOTAL, // Fallback
-    },
-    "pme-30-99-adesao": {
+    "pme-30-99-demais-pracas": {
       "parcial": RIO_DE_JANEIRO_PME_DEMAIS_PARCIAL,
       "total": RIO_DE_JANEIRO_PME_DEMAIS_TOTAL,
     },
