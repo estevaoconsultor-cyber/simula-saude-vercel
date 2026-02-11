@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import path from "path";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
@@ -175,6 +176,22 @@ async function startServer() {
       res.json({ ok: true, timestamp: Date.now() });
     } catch (error) {
       res.status(500).json({ ok: false, error: "Maintenance failed" });
+    }
+  });
+
+  // Servir arquivos estáticos do build web (Expo export)
+  const webDistPath = path.join(process.cwd(), "dist");
+  app.use(express.static(webDistPath));
+
+  // Fallback: qualquer rota não-API serve o index.html (SPA)
+  app.get("*", (req, res) => {
+    if (req.path.startsWith("/api")) return;
+    const htmlFile = path.join(webDistPath, req.path + ".html");
+    const fs = require("fs");
+    if (fs.existsSync(htmlFile)) {
+      res.sendFile(htmlFile);
+    } else {
+      res.sendFile(path.join(webDistPath, "index.html"));
     }
   });
 
