@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { storageGet } from "../storage";
+import { sendDailyReport, dailyMaintenance } from "../daily-report";
 
 // Mapeamento de documentos para S3 keys
 const DOCUMENT_MAP: Record<string, { s3Key: string; displayName: string }> = {
@@ -157,8 +158,41 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
+  // Rota para disparar relatório diário manualmente
+  app.get("/api/report/daily", async (_req, res) => {
+    try {
+      const sent = await sendDailyReport();
+      res.json({ ok: sent, timestamp: Date.now() });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: "Failed to send report" });
+    }
+  });
+
+  // Rota para manutenção diária
+  app.get("/api/maintenance", async (_req, res) => {
+    try {
+      await dailyMaintenance();
+      res.json({ ok: true, timestamp: Date.now() });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: "Maintenance failed" });
+    }
+  });
+
   server.listen(port, () => {
     console.log(`[api] server listening on port ${port}`);
+
+    // Agendar relatório diário (verifica a cada hora, envia às 18h BRT = 21h UTC)
+    setInterval(async () => {
+      const now = new Date();
+      const hour = now.getUTCHours();
+      const minute = now.getUTCMinutes();
+      // 21h UTC = 18h BRT (horário de Brasília)
+      if (hour === 21 && minute < 5) {
+        console.log("[Cron] Enviando relatório diário...");
+        await sendDailyReport();
+        await dailyMaintenance();
+      }
+    }, 5 * 60 * 1000); // Verifica a cada 5 minutos
   });
 }
 

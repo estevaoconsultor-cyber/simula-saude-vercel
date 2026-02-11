@@ -1,575 +1,476 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   ScrollView,
-  TextInput,
   TouchableOpacity,
-  StyleSheet,
-  Alert,
   ActivityIndicator,
-  Linking,
-  Platform,
+  Alert,
+  StyleSheet,
 } from "react-native";
-import { Image } from "expo-image";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
-import { useAuth } from "@/hooks/use-auth";
-import { trpc } from "@/lib/trpc";
-import { PhotoEditor } from "@/components/photo-editor";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useBrokerAuth } from "@/contexts/BrokerAuthContext";
+import { getBrokerToken } from "@/contexts/BrokerAuthContext";
 
-// Chave para armazenar dados locais do perfil
-const LOCAL_PROFILE_KEY = "@executive_profile";
-const REGISTERED_EXECUTIVES_KEY = "@registered_executives";
+const PROFILE_LABELS: Record<string, string> = {
+  vendedor: "Vendedor",
+  dono_corretora: "Dono de Corretora",
+  adm: "ADM",
+  supervisor: "Supervisor",
+};
 
-interface LocalProfile {
-  name: string;
-  role: string;
-  whatsapp: string;
-  email: string;
-  photoUrl: string;
-  brokerCode: string;
+interface DeviceSession {
+  id: number;
+  deviceName: string | null;
+  lastIp: string | null;
+  lastUsedAt: string;
+  createdAt: string;
+  isCurrent: boolean;
 }
 
 export default function AccountScreen() {
   const colors = useColors();
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
-  
-  // Estados do formulário
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
-  const [email, setEmail] = useState("");
-  const [brokerCode, setBrokerCode] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
-  
-  // Estados de UI
-  const [isEditing, setIsEditing] = useState(false);
-  const [showPhotoEditor, setShowPhotoEditor] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [hasLocalProfile, setHasLocalProfile] = useState(false);
-  
-  // Carregar perfil local ao iniciar
-  useEffect(() => {
-    loadLocalProfile();
-  }, []);
-  
-  const loadLocalProfile = async () => {
+  const { broker, logout, isAuthenticated } = useBrokerAuth();
+  const [sessions, setSessions] = useState<DeviceSession[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [revokingId, setRevokingId] = useState<number | null>(null);
+
+  const fetchSessions = useCallback(async () => {
+    const token = getBrokerToken();
+    if (!token) return;
+
+    setLoadingSessions(true);
     try {
-      const stored = await AsyncStorage.getItem(LOCAL_PROFILE_KEY);
-      if (stored) {
-        const profile: LocalProfile = JSON.parse(stored);
-        setName(profile.name || "");
-        setRole(profile.role || "");
-        setWhatsapp(profile.whatsapp || "");
-        setEmail(profile.email || "");
-        setBrokerCode(profile.brokerCode || "");
-        setPhotoUrl(profile.photoUrl || "");
-        setHasLocalProfile(true);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar perfil local:", error);
-    }
-  };
-  
-  const saveLocalProfile = async () => {
-    try {
-      const profile: LocalProfile = {
-        name,
-        role,
-        whatsapp,
-        email,
-        brokerCode,
-        photoUrl,
-      };
-      await AsyncStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(profile));
-      
-      // Salvar também na lista de executivos cadastrados
-      await saveToRegisteredExecutives(profile);
-      
-      setHasLocalProfile(true);
-      return true;
-    } catch (error) {
-      console.error("Erro ao salvar perfil local:", error);
-      return false;
-    }
-  };
-  
-  const saveToRegisteredExecutives = async (profile: LocalProfile) => {
-    try {
-      const stored = await AsyncStorage.getItem(REGISTERED_EXECUTIVES_KEY);
-      let executives = stored ? JSON.parse(stored) : [];
-      
-      // Verificar se já existe pelo email ou código
-      const existingIndex = executives.findIndex(
-        (e: any) => e.email === profile.email || e.brokerCode === profile.brokerCode
+      const response = await fetch(
+        `${getApiUrl()}/api/trpc/broker.sessions?input=${encodeURIComponent(JSON.stringify({}))}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }
       );
-      
-      const executiveData = {
-        id: existingIndex >= 0 ? executives[existingIndex].id : Date.now().toString(),
-        name: profile.name,
-        role: profile.role,
-        whatsapp: profile.whatsapp,
-        email: profile.email,
-        photoUrl: profile.photoUrl,
-        brokerCode: profile.brokerCode,
-        createdAt: existingIndex >= 0 ? executives[existingIndex].createdAt : new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      
-      if (existingIndex >= 0) {
-        executives[existingIndex] = executiveData;
-      } else {
-        executives.push(executiveData);
+
+      if (response.ok) {
+        const data = await response.json();
+        const result = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
+        if (Array.isArray(result)) {
+          setSessions(result);
+        }
       }
-      
-      await AsyncStorage.setItem(REGISTERED_EXECUTIVES_KEY, JSON.stringify(executives));
     } catch (error) {
-      console.error("Erro ao salvar na lista de executivos:", error);
-    }
-  };
-  
-  const handleSaveProfile = async () => {
-    if (!name.trim()) {
-      Alert.alert("Erro", "Nome é obrigatório");
-      return;
-    }
-    
-    setSaving(true);
-    try {
-      const success = await saveLocalProfile();
-      if (success) {
-        setIsEditing(false);
-        Alert.alert("Sucesso", "Perfil salvo com sucesso!");
-      } else {
-        Alert.alert("Erro", "Não foi possível salvar o perfil");
-      }
+      console.error("Error fetching sessions:", error);
     } finally {
-      setSaving(false);
+      setLoadingSessions(false);
     }
-  };
-  
-  const handlePhotoSave = async (uri: string) => {
-    setPhotoUrl(uri);
-    // Salvar automaticamente quando a foto é alterada
-    const profile: LocalProfile = {
-      name,
-      role,
-      whatsapp,
-      email,
-      brokerCode,
-      photoUrl: uri,
-    };
-    await AsyncStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(profile));
-  };
-  
-  const handleClearProfile = () => {
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchSessions();
+    }
+  }, [isAuthenticated, fetchSessions]);
+
+  const handleRevokeSession = async (sessionId: number) => {
+    const token = getBrokerToken();
+    if (!token) return;
+
     Alert.alert(
-      "Limpar Perfil",
-      "Tem certeza que deseja limpar todos os dados do perfil?",
+      "Encerrar Sessão",
+      "Deseja encerrar esta sessão? O dispositivo precisará fazer login novamente.",
       [
         { text: "Cancelar", style: "cancel" },
         {
-          text: "Limpar",
+          text: "Encerrar",
           style: "destructive",
           onPress: async () => {
-            await AsyncStorage.removeItem(LOCAL_PROFILE_KEY);
-            setName("");
-            setRole("");
-            setWhatsapp("");
-            setEmail("");
-            setBrokerCode("");
-            setPhotoUrl("");
-            setHasLocalProfile(false);
-            setIsEditing(false);
+            setRevokingId(sessionId);
+            try {
+              await fetch(`${getApiUrl()}/api/trpc/broker.revokeSession`, {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({ json: { sessionId } }),
+              });
+              await fetchSessions();
+            } catch (error) {
+              console.error("Error revoking session:", error);
+            } finally {
+              setRevokingId(null);
+            }
           },
         },
       ]
     );
   };
-  
-  const openWhatsApp = () => {
-    if (whatsapp) {
-      const cleanNumber = whatsapp.replace(/\D/g, "");
-      const url = `https://wa.me/55${cleanNumber}`;
-      Linking.openURL(url);
-    }
+
+  const handleLogout = () => {
+    Alert.alert("Sair", "Deseja sair da sua conta?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Sair",
+        style: "destructive",
+        onPress: logout,
+      },
+    ]);
   };
-  
-  const openEmail = () => {
-    if (email) {
-      Linking.openURL(`mailto:${email}`);
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return dateStr;
     }
   };
 
-  // Renderizar formulário de cadastro/edição
-  const renderForm = () => (
-    <View style={styles.formContainer}>
-      {/* Foto de Perfil */}
-      <TouchableOpacity
-        style={styles.photoContainer}
-        onPress={() => setShowPhotoEditor(true)}
-      >
-        {photoUrl ? (
-          <Image
-            source={{ uri: photoUrl }}
-            style={styles.profilePhoto}
-            contentFit="cover"
-          />
-        ) : (
-          <View style={[styles.photoPlaceholder, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.photoPlaceholderText, { color: colors.muted }]}>
-              Adicionar{"\n"}Foto
-            </Text>
-          </View>
-        )}
-        <View style={[styles.editPhotoButton, { backgroundColor: colors.primary }]}>
-          <Text style={styles.editPhotoText}>✎</Text>
+  if (!broker) {
+    return (
+      <ScreenContainer className="p-4">
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
-      </TouchableOpacity>
-      
-      {/* Campos do formulário */}
-      <View style={styles.inputGroup}>
-        <Text style={[styles.label, { color: colors.foreground }]}>Nome *</Text>
-        <TextInput
-          style={[
-            styles.input,
-            { backgroundColor: colors.surface, color: colors.foreground, borderColor: colors.border },
-          ]}
-          value={name}
-          onChangeText={setName}
-          placeholder="Seu nome completo"
-          placeholderTextColor={colors.muted}
-          editable={isEditing || !hasLocalProfile}
-        />
-      </View>
-      
-      <View style={styles.inputGroup}>
-        <Text style={[styles.label, { color: colors.foreground }]}>Cargo</Text>
-        <TextInput
-          style={[
-            styles.input,
-            { backgroundColor: colors.surface, color: colors.foreground, borderColor: colors.border },
-          ]}
-          value={role}
-          onChangeText={setRole}
-          placeholder="Ex: Executivo Comercial"
-          placeholderTextColor={colors.muted}
-          editable={isEditing || !hasLocalProfile}
-        />
-      </View>
-      
-      <View style={styles.inputGroup}>
-        <Text style={[styles.label, { color: colors.foreground }]}>WhatsApp</Text>
-        <TextInput
-          style={[
-            styles.input,
-            { backgroundColor: colors.surface, color: colors.foreground, borderColor: colors.border },
-          ]}
-          value={whatsapp}
-          onChangeText={setWhatsapp}
-          placeholder="(11) 99999-9999"
-          placeholderTextColor={colors.muted}
-          keyboardType="phone-pad"
-          editable={isEditing || !hasLocalProfile}
-        />
-      </View>
-      
-      <View style={styles.inputGroup}>
-        <Text style={[styles.label, { color: colors.foreground }]}>E-mail</Text>
-        <TextInput
-          style={[
-            styles.input,
-            { backgroundColor: colors.surface, color: colors.foreground, borderColor: colors.border },
-          ]}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="seu@email.com"
-          placeholderTextColor={colors.muted}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          editable={isEditing || !hasLocalProfile}
-        />
-      </View>
-      
-      <View style={styles.inputGroup}>
-        <Text style={[styles.label, { color: colors.foreground }]}>Código Hapvida</Text>
-        <TextInput
-          style={[
-            styles.input,
-            { backgroundColor: colors.surface, color: colors.foreground, borderColor: colors.border },
-          ]}
-          value={brokerCode}
-          onChangeText={setBrokerCode}
-          placeholder="Código do corretor"
-          placeholderTextColor={colors.muted}
-          editable={isEditing || !hasLocalProfile}
-        />
-      </View>
-      
-      {/* Botões de ação */}
-      {(isEditing || !hasLocalProfile) ? (
-        <View style={styles.buttonGroup}>
-          <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: colors.primary }]}
-            onPress={handleSaveProfile}
-            disabled={saving}
-          >
-            {saving ? (
-              <ActivityIndicator color="#FFF" />
-            ) : (
-              <Text style={styles.saveButtonText}>
-                {hasLocalProfile ? "Salvar Alterações" : "Criar Perfil"}
-              </Text>
-            )}
-          </TouchableOpacity>
-          
-          {hasLocalProfile && (
-            <TouchableOpacity
-              style={[styles.cancelButton, { borderColor: colors.border }]}
-              onPress={() => {
-                loadLocalProfile();
-                setIsEditing(false);
-              }}
-            >
-              <Text style={[styles.cancelButtonText, { color: colors.foreground }]}>
-                Cancelar
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      ) : (
-        <View style={styles.buttonGroup}>
-          <TouchableOpacity
-            style={[styles.editButton, { backgroundColor: colors.primary }]}
-            onPress={() => setIsEditing(true)}
-          >
-            <Text style={styles.editButtonText}>Editar Perfil</Text>
-          </TouchableOpacity>
-          
-          {/* Botões de contato rápido */}
-          <View style={styles.quickActions}>
-            {whatsapp && (
-              <TouchableOpacity
-                style={[styles.quickButton, { backgroundColor: "#25D366" }]}
-                onPress={openWhatsApp}
-              >
-                <Text style={styles.quickButtonText}>WhatsApp</Text>
-              </TouchableOpacity>
-            )}
-            {email && (
-              <TouchableOpacity
-                style={[styles.quickButton, { backgroundColor: colors.primary }]}
-                onPress={openEmail}
-              >
-                <Text style={styles.quickButtonText}>E-mail</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          
-          <TouchableOpacity
-            style={[styles.clearButton, { borderColor: colors.error }]}
-            onPress={handleClearProfile}
-          >
-            <Text style={[styles.clearButtonText, { color: colors.error }]}>
-              Limpar Perfil
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
+      </ScreenContainer>
+    );
+  }
 
   return (
-    <ScreenContainer>
+    <ScreenContainer className="p-4">
       <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.foreground }]}>
-            Minha Conta
+        {/* Header do Perfil */}
+        <View style={[styles.profileHeader, { backgroundColor: colors.primary }]}>
+          <View style={styles.avatarContainer}>
+            <Text style={styles.avatarText}>
+              {broker.firstName[0]}{broker.lastName[0]}
+            </Text>
+          </View>
+          <Text style={styles.profileName}>
+            {broker.firstName} {broker.lastName}
           </Text>
-          <Text style={[styles.subtitle, { color: colors.muted }]}>
-            {hasLocalProfile
-              ? "Gerencie seu perfil de executivo"
-              : "Crie seu perfil para aparecer na busca"}
-          </Text>
+          <Text style={styles.profileEmail}>{broker.email}</Text>
+          <View style={styles.profileBadge}>
+            <Text style={styles.profileBadgeText}>
+              {PROFILE_LABELS[broker.profile] || broker.profile}
+            </Text>
+          </View>
         </View>
-        
-        {/* Formulário */}
-        {renderForm()}
-        
-        {/* Informação */}
-        <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.infoTitle, { color: colors.foreground }]}>
-            ℹ️ Como funciona
+
+        {/* Informações do Perfil */}
+        <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+            Informações do Perfil
           </Text>
-          <Text style={[styles.infoText, { color: colors.muted }]}>
-            Ao criar seu perfil, outros usuários poderão encontrar você na busca
-            de executivos. Mantenha seus dados de contato atualizados para
-            facilitar a comunicação com clientes e parceiros.
-          </Text>
+
+          <View style={styles.infoRow}>
+            <Text style={[styles.infoLabel, { color: colors.muted }]}>Nome</Text>
+            <Text style={[styles.infoValue, { color: colors.foreground }]}>
+              {broker.firstName} {broker.lastName}
+            </Text>
+          </View>
+
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          <View style={styles.infoRow}>
+            <Text style={[styles.infoLabel, { color: colors.muted }]}>E-mail</Text>
+            <Text style={[styles.infoValue, { color: colors.foreground }]}>
+              {broker.email}
+            </Text>
+          </View>
+
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          <View style={styles.infoRow}>
+            <Text style={[styles.infoLabel, { color: colors.muted }]}>Perfil</Text>
+            <Text style={[styles.infoValue, { color: colors.foreground }]}>
+              {PROFILE_LABELS[broker.profile] || broker.profile}
+            </Text>
+          </View>
+
+          {broker.sellerCode && (
+            <>
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLabel, { color: colors.muted }]}>Cód. Vendedor</Text>
+                <Text style={[styles.infoValue, { color: colors.foreground }]}>
+                  {broker.sellerCode}
+                </Text>
+              </View>
+            </>
+          )}
+
+          {broker.brokerageCode && (
+            <>
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLabel, { color: colors.muted }]}>Cód. Corretora</Text>
+                <Text style={[styles.infoValue, { color: colors.foreground }]}>
+                  {broker.brokerageCode}
+                </Text>
+              </View>
+            </>
+          )}
+
+          {broker.brokerageName && (
+            <>
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLabel, { color: colors.muted }]}>Corretora</Text>
+                <Text style={[styles.infoValue, { color: colors.foreground }]}>
+                  {broker.brokerageName}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
+
+        {/* Dispositivos Conectados */}
+        <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+              Dispositivos Conectados
+            </Text>
+            <Text style={[styles.deviceCount, { color: colors.muted }]}>
+              {sessions.length}/3
+            </Text>
+          </View>
+
+          {loadingSessions ? (
+            <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 12 }} />
+          ) : sessions.length === 0 ? (
+            <Text style={[styles.emptyText, { color: colors.muted }]}>
+              Nenhuma sessão ativa
+            </Text>
+          ) : (
+            sessions.map((session, index) => (
+              <View key={session.id}>
+                {index > 0 && (
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                )}
+                <View style={styles.sessionRow}>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                      <Text style={{ fontSize: 18 }}>
+                        {session.deviceName?.includes("iPhone") || session.deviceName?.includes("iPad")
+                          ? "📱"
+                          : session.deviceName?.includes("Android")
+                          ? "📱"
+                          : "💻"}
+                      </Text>
+                      <Text style={[styles.sessionDevice, { color: colors.foreground }]}>
+                        {session.deviceName || "Dispositivo desconhecido"}
+                      </Text>
+                      {session.isCurrent && (
+                        <View style={[styles.currentBadge, { backgroundColor: colors.success }]}>
+                          <Text style={styles.currentBadgeText}>Atual</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={[styles.sessionInfo, { color: colors.muted }]}>
+                      Último acesso: {formatDate(session.lastUsedAt)}
+                    </Text>
+                    {session.lastIp && (
+                      <Text style={[styles.sessionInfo, { color: colors.muted }]}>
+                        IP: {session.lastIp}
+                      </Text>
+                    )}
+                  </View>
+                  {!session.isCurrent && (
+                    <TouchableOpacity
+                      onPress={() => handleRevokeSession(session.id)}
+                      disabled={revokingId === session.id}
+                      style={[styles.revokeButton, { borderColor: colors.error }]}
+                    >
+                      {revokingId === session.id ? (
+                        <ActivityIndicator size="small" color={colors.error} />
+                      ) : (
+                        <Text style={[styles.revokeText, { color: colors.error }]}>
+                          Encerrar
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            ))
+          )}
+        </View>
+
+        {/* Botão de Logout */}
+        <TouchableOpacity
+          onPress={handleLogout}
+          style={[styles.logoutButton, { borderColor: colors.error }]}
+        >
+          <Text style={[styles.logoutText, { color: colors.error }]}>
+            Sair da Conta
+          </Text>
+        </TouchableOpacity>
+
+        {/* Versão */}
+        <Text style={[styles.versionText, { color: colors.muted }]}>
+          Simulador Hapvida v2.1.0
+        </Text>
       </ScrollView>
-      
-      {/* Editor de Foto */}
-      <PhotoEditor
-        visible={showPhotoEditor}
-        onClose={() => setShowPhotoEditor(false)}
-        onSave={handlePhotoSave}
-        currentPhoto={photoUrl}
-        executiveName={name || "executive"}
-      />
     </ScreenContainer>
   );
 }
 
+function getApiUrl(): string {
+  if (typeof window !== "undefined" && window.location) {
+    const { protocol, hostname } = window.location;
+    const apiHostname = hostname.replace(/^8081-/, "3000-");
+    if (apiHostname !== hostname) {
+      return `${protocol}//${apiHostname}`;
+    }
+    return `${protocol}//${hostname}`;
+  }
+  return "";
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  profileHeader: {
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    marginBottom: 16,
   },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
+  avatarContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
   },
-  header: {
-    marginBottom: 24,
-  },
-  title: {
+  avatarText: {
     fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-  },
-  formContainer: {
-    gap: 16,
-  },
-  photoContainer: {
-    alignSelf: "center",
-    marginBottom: 16,
-    position: "relative",
-  },
-  profilePhoto: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  photoPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  photoPlaceholderText: {
-    fontSize: 14,
-    textAlign: "center",
-  },
-  editPhotoButton: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  editPhotoText: {
     color: "#FFF",
-    fontSize: 18,
   },
-  inputGroup: {
-    gap: 6,
+  profileName: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#FFF",
   },
-  label: {
+  profileEmail: {
     fontSize: 14,
-    fontWeight: "500",
+    color: "rgba(255,255,255,0.8)",
+    marginTop: 4,
   },
-  input: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+  profileBadge: {
+    backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: 12,
-    fontSize: 16,
-    borderWidth: 1,
-  },
-  buttonGroup: {
-    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     marginTop: 8,
   },
-  saveButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  saveButtonText: {
+  profileBadgeText: {
     color: "#FFF",
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: "600",
   },
-  cancelButton: {
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    borderWidth: 1,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  editButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  editButtonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  quickActions: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  quickButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  quickButtonText: {
-    color: "#FFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  clearButton: {
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    borderWidth: 1,
-  },
-  clearButtonText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  infoCard: {
-    marginTop: 24,
+  section: {
+    borderRadius: 16,
     padding: 16,
-    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
   },
-  infoTitle: {
+  sectionTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
+    fontWeight: "bold",
+    marginBottom: 12,
   },
-  infoText: {
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  infoLabel: {
     fontSize: 14,
-    lineHeight: 20,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "right",
+    flex: 1,
+    marginLeft: 16,
+  },
+  divider: {
+    height: 1,
+    marginVertical: 2,
+  },
+  deviceCount: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  sessionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  sessionDevice: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  sessionInfo: {
+    fontSize: 12,
+    marginTop: 2,
+    marginLeft: 26,
+  },
+  currentBadge: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  currentBadgeText: {
+    color: "#FFF",
+    fontSize: 10,
+    fontWeight: "bold",
+  },
+  revokeButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  revokeText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 12,
+  },
+  logoutButton: {
+    borderWidth: 1.5,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  versionText: {
+    fontSize: 12,
+    textAlign: "center",
+    marginBottom: 20,
   },
 });

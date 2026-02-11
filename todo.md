@@ -261,3 +261,24 @@ Configurar deploy automático para que:
 - [ ] Corrigir busca por cidade/estado (zerada)
 - [ ] Testar todas as funcionalidades de rede
 - [ ] Fazer build e deploy das correções
+
+
+## Fase 24 - Sistema de Contas de Corretores + Orçamentos Vinculados
+- [x] Schema do banco: tabela brokers (nome, sobrenome, email, senha hash, perfil, código vendedor, código corretora, razão social)
+- [x] Schema do banco: tabela broker_sessions (controle de dispositivos, max 3)
+- [x] Schema do banco: tabela broker_quotes (orçamentos salvos vinculados ao usuário)
+- [x] Schema do banco: tabela access_logs (registro de acessos para relatório diário)
+- [x] API de cadastro de corretor
+- [x] API de login com email+senha
+- [x] API de controle de dispositivos (max 3 ativos, 4º derruba mais antigo)
+- [x] API de orçamentos (salvar/listar/deletar vinculados ao usuário)
+- [x] Tela de cadastro no frontend
+- [x] Tela de login no frontend
+- [x] Bloqueio de acesso ao simulador sem login (AuthGate)
+- [x] Vincular favoritos existentes à conta do corretor (salvar no servidor)
+- [x] Relatório diário automático (cron às 18h BRT)
+- [x] Endpoint REST para relatório diário manual
+- [x] Tela de Conta com perfil do corretor e gerenciamento de sessões
+- [x] 15 testes automatizados passando (broker-auth.test.ts)
+- [ ] Atualizar data do site para 10/02/2026
+- [ ] Deploy completo (servidor + frontend)

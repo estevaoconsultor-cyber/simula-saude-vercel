@@ -15,6 +15,13 @@
       "when": 1769734008310,
       "tag": "0001_noisy_tomas",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1770768333509,
+      "tag": "0002_flawless_viper",
+      "breakpoints": true
     }
   ]
 }

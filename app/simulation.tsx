@@ -14,6 +14,7 @@ import { Image } from "expo-image";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
+import { getBrokerToken } from "@/contexts/BrokerAuthContext";
 import { ScreenContainer } from "@/components/screen-container";
 import { useSimulation } from "@/contexts/SimulationContext";
 import {
@@ -266,9 +267,36 @@ export default function SimulationScreen() {
     };
 
     try {
+      // Salvar localmente
       const updated = [...savedSimulations, newSimulation];
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       setSavedSimulations(updated);
+
+      // Salvar no servidor (se logado)
+      const token = getBrokerToken();
+      if (token) {
+        try {
+          await fetch(`${getSimApiUrl()}/api/trpc/quotes.save`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              json: {
+                companyName: companyName.trim(),
+                expectedDate: expectedDate.trim(),
+                quoteData: newSimulation,
+              },
+            }),
+          });
+        } catch (e) {
+          // Falha silenciosa no servidor, já salvou localmente
+          console.warn("Erro ao salvar no servidor:", e);
+        }
+      }
+
       setShowSaveModal(false);
       setCompanyName("");
       setExpectedDate("");
@@ -1250,4 +1278,16 @@ export default function SimulationScreen() {
       </Modal>
     </ScreenContainer>
   );
+}
+
+function getSimApiUrl(): string {
+  if (typeof window !== "undefined" && window.location) {
+    const { protocol, hostname } = window.location;
+    const apiHostname = hostname.replace(/^8081-/, "3000-");
+    if (apiHostname !== hostname) {
+      return `${protocol}//${apiHostname}`;
+    }
+    return `${protocol}//${hostname}`;
+  }
+  return "";
 }

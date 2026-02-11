@@ -142,7 +142,7 @@ export default function HomeScreen() {
             Tabelas Atualizadas
           </Text>
           <Text className="text-xs text-muted">
-            Valores válidos para contratos assinados a partir de 01/02/2026.
+            Valores válidos para contratos assinados a partir de 10/02/2026.
             Super Simples e PME disponíveis.
           </Text>
         </View>
@@ -150,7 +150,7 @@ export default function HomeScreen() {
         {/* Versão do App */}
         <View className="mt-6 items-center">
           <Text className="text-xs text-muted/50">
-            SimulaSaúde v2.0.2 • Build 20260202
+            SimulaSaúde v2.0.3 • Build 20260210
           </Text>
         </View>
       </ScrollView>

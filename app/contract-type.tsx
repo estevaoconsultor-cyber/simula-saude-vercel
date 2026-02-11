@@ -78,7 +78,7 @@ export default function ContractTypeScreen() {
             Importante
           </Text>
           <Text className="text-xs text-muted">
-            A partir de 01/02/2026, novas modalidades de contratação para Super
+            A partir de 10/02/2026, novas modalidades de contratação para Super
             Simples (02 a 29 vidas) e PME (30 a 99 vidas) nas filiais São Paulo,
             Jundiaí, São Bernardo do Campo, Santos e Mogi das Cruzes.
           </Text>
