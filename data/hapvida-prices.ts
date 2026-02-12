@@ -239,37 +239,92 @@ export interface Product {
 }
 
 export const PRODUCTS: Product[] = [
+  // ========== ENTRADA ==========
+  // Nosso Médico (genérico + regionais)
   { id: "nosso-medico", name: "Nosso Médico", shortName: "N. Médico", category: "entrada", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "nosso-medico-rmsp-enf", name: "Nosso Médico RMSP", shortName: "N. Méd RMSP", category: "entrada", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "nosso-medico-jundiai-enf", name: "Nosso Médico Jundiaí", shortName: "N. Méd Jundiaí", category: "entrada", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "nosso-medico-americana-enf", name: "Nosso Médico Americana", shortName: "N. Méd Americana", category: "entrada", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "nosso-medico-campinas-enf", name: "Nosso Médico Campinas", shortName: "N. Méd Campinas", category: "entrada", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "nosso-medico-sorocaba-enf", name: "Nosso Médico Sorocaba", shortName: "N. Méd Sorocaba", category: "entrada", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  // Smart Ambulatorial
   { id: "smart-ambulatorial", name: "Smart Ambulatorial", shortName: "Smart Amb", category: "entrada", segmentation: "AMBULATORIAL", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "smart-ambulatorial-sac", name: "Smart Ambulatorial SAC", shortName: "Smart Amb SAC", category: "entrada", segmentation: "AMBULATORIAL", accommodation: "ENFERM", hasReimbursement: false },
+  // ========== INTERMEDIÁRIO ==========
+  // Smart 150
   { id: "smart-150", name: "Smart 150", shortName: "S150", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "smart-150-grande-rio-enf", name: "Smart 150 Grande Rio", shortName: "S150 GR", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  // Smart 200
   { id: "smart-200", name: "Smart 200", shortName: "S200", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "smart-200-sp-capital-enf", name: "Smart 200 SP Capital", shortName: "S200 SP", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "smart-200-abc-bs-enf", name: "Smart 200 ABC/BS", shortName: "S200 ABC", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "smart-200-alto-tiete-enf", name: "Smart 200 Alto Tietê", shortName: "S200 AT", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "smart-200-jundiai-enf", name: "Smart 200 Jundiaí", shortName: "S200 Jund", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "smart-200-americana-enf", name: "Smart 200 Americana", shortName: "S200 Amer", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "smart-200-campinas-enf", name: "Smart 200 Campinas", shortName: "S200 Camp", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "smart-200-sorocaba-enf", name: "Smart 200 Sorocaba", shortName: "S200 Sor", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "smart-200-rio-enf", name: "Smart 200 Rio", shortName: "S200 Rio", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  // Smart 200 UP
   { id: "smart-200-up", name: "Smart 200 UP", shortName: "S200 UP", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "smart-200-up-enf", name: "Smart 200 UP", shortName: "S200 UP E", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  // Smart 300
   { id: "smart-300", name: "Smart 300", shortName: "S300", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "smart-300-enf", name: "Smart 300 Enfermaria", shortName: "S300 E", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "smart-300-apt", name: "Smart 300 Apartamento", shortName: "S300 A", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: false },
+  // Smart 400
   { id: "smart-400-enf", name: "Smart 400 Enfermaria", shortName: "S400 E", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
   { id: "smart-400-apt", name: "Smart 400 Apartamento", shortName: "S400 A", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: false },
+  // Smart 500
   { id: "smart-500-enf", name: "Smart 500 Enfermaria", shortName: "S500 E", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
   { id: "smart-500-apt", name: "Smart 500 Apartamento", shortName: "S500 A", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: false },
+  // Smart Prime
   { id: "smart-prime-enf", name: "Smart Prime Enfermaria", shortName: "Prime E", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
   { id: "smart-prime-apt", name: "Smart Prime Apartamento", shortName: "Prime A", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: false },
+  // Pleno (genérico + regionais)
   { id: "pleno-enf", name: "Pleno Enfermaria", shortName: "Pleno E", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
   { id: "pleno-apt", name: "Pleno Apartamento", shortName: "Pleno A", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: false },
+  { id: "pleno-jundiai-enf", name: "Pleno Jundiaí Enfermaria", shortName: "Pleno Jund E", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "pleno-jundiai-apt", name: "Pleno Jundiaí Apartamento", shortName: "Pleno Jund A", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: false },
+  { id: "pleno-americana-enf", name: "Pleno Americana Enfermaria", shortName: "Pleno Amer E", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "pleno-americana-apt", name: "Pleno Americana Apartamento", shortName: "Pleno Amer A", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: false },
+  { id: "pleno-campinas-enf", name: "Pleno Campinas Enfermaria", shortName: "Pleno Camp E", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "pleno-campinas-apt", name: "Pleno Campinas Apartamento", shortName: "Pleno Camp A", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: false },
+  { id: "pleno-sorocaba-enf", name: "Pleno Sorocaba Enfermaria", shortName: "Pleno Sor E", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "pleno-sorocaba-apt", name: "Pleno Sorocaba Apartamento", shortName: "Pleno Sor A", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: false },
+  { id: "pleno-vale-do-paraiba-enf", name: "Pleno Vale do Paraíba Enfermaria", shortName: "Pleno VP E", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "pleno-vale-do-paraiba-apt", name: "Pleno Vale do Paraíba Apartamento", shortName: "Pleno VP A", category: "intermediario", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: false },
+  // ========== PREMIUM ==========
+  // Basic Referência
   { id: "basic-referencia", name: "Basic Referência", shortName: "Basic", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  { id: "basic-referencia-enf", name: "Basic Referência Enfermaria", shortName: "Basic E", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: false },
+  // Advance 600
   { id: "advance-600-enf-total", name: "Advance 600 Enf (Reemb. Total)", shortName: "Adv600 E T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "total" },
   { id: "advance-600-enf-parcial", name: "Advance 600 Enf (Reemb. Parcial)", shortName: "Adv600 E P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "parcial" },
   { id: "advance-600-apt-total", name: "Advance 600 Apto (Reemb. Total)", shortName: "Adv600 A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
   { id: "advance-600-apt-parcial", name: "Advance 600 Apto (Reemb. Parcial)", shortName: "Adv600 A P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
+  // Advance 700
   { id: "advance-700-enf-total", name: "Advance 700 Enf (Reemb. Total)", shortName: "Adv700 E T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "total" },
   { id: "advance-700-enf-parcial", name: "Advance 700 Enf (Reemb. Parcial)", shortName: "Adv700 E P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "parcial" },
   { id: "advance-700-apt-total", name: "Advance 700 Apto (Reemb. Total)", shortName: "Adv700 A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
   { id: "advance-700-apt-parcial", name: "Advance 700 Apto (Reemb. Parcial)", shortName: "Adv700 A P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
+  // Premium 900 (PME)
+  { id: "premium-900-apt-total", name: "Premium 900 Apto (Reemb. Total)", shortName: "P900 A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
+  // Premium 900.1
   { id: "premium-900-1-enf-total", name: "Premium 900.1 Enf (Reemb. Total)", shortName: "Prem E T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "total" },
   { id: "premium-900-1-enf-parcial", name: "Premium 900.1 Enf (Reemb. Parcial)", shortName: "Prem E P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "parcial" },
   { id: "premium-900-1-apt-total", name: "Premium 900.1 Apto (Reemb. Total)", shortName: "Prem A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
   { id: "premium-900-1-apt-parcial", name: "Premium 900.1 Apto (Reemb. Parcial)", shortName: "Prem A P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
+  // Premium 900 Care (PME)
+  { id: "premium-900-care-apt-total", name: "Premium 900 Care Apto (Reemb. Total)", shortName: "P900C A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
+  { id: "premium-900-care-apt-parcial", name: "Premium 900 Care Apto (Reemb. Parcial)", shortName: "P900C A P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
+  // Premium 900.1 Care
   { id: "premium-900-1-care-enf-total", name: "Premium 900.1 Care Enf (Reemb. Total)", shortName: "Care E T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "total" },
   { id: "premium-900-1-care-enf-parcial", name: "Premium 900.1 Care Enf (Reemb. Parcial)", shortName: "Care E P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "parcial" },
   { id: "premium-900-1-care-apt-total", name: "Premium 900.1 Care Apto (Reemb. Total)", shortName: "Care A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
   { id: "premium-900-1-care-apt-parcial", name: "Premium 900.1 Care Apto (Reemb. Parcial)", shortName: "Care A P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
+  // Infinity (PME)
+  { id: "infinity-apt-total", name: "Infinity Apto (Reemb. Total)", shortName: "Inf A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
+  // Infinity 1000.1
   { id: "infinity-1000-1-total", name: "Infinity 1000.1 (Reemb. Total)", shortName: "Inf T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
   { id: "infinity-1000-1-parcial", name: "Infinity 1000.1 (Reemb. Parcial)", shortName: "Inf P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
 ];

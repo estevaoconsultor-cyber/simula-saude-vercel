@@ -1,16 +1,45 @@
-import { useState } from "react";
-import { ScrollView, Text, View, TouchableOpacity, Image } from "react-native";
+import { useState, useEffect, useRef } from "react";
+import { ScrollView, Text, View, TouchableOpacity, Image, Platform, StyleSheet, Linking } from "react-native";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScreenContainer } from "@/components/screen-container";
 import { useSimulation } from "@/contexts/SimulationContext";
 import { CITIES } from "@/data/hapvida-prices";
 import { useColors } from "@/hooks/use-colors";
+import { useUser } from "@/contexts/UserContext";
+
+const STORAGE_KEY = "@simulasaude_form_done";
+const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSe2WH9EzLWYRfTYYFBKaF1J7F6eX9MLE4HB8nHeAyrtj4uILw/viewform?embedded=true";
 
 export default function HomeScreen() {
   const router = useRouter();
   const { dispatch } = useSimulation();
   const colors = useColors();
+  const { isRegistered } = useUser();
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  // Redirecionar para cadastro se não registrado
+  useEffect(() => {
+    if (!isRegistered) {
+      router.replace("/register" as any);
+    }
+  }, [isRegistered]);
+
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY).then((data) => {
+      if (data) {
+        setShowForm(false);
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  const handleFormDone = async () => {
+    await AsyncStorage.setItem(STORAGE_KEY, "true");
+    setShowForm(false);
+  };
 
   const handleCitySelect = (cityId: string) => {
     dispatch({ type: "SET_CITY", payload: cityId as any });
@@ -21,29 +50,103 @@ export default function HomeScreen() {
     setExpandedCity(expandedCity === cityId ? null : cityId);
   };
 
+  if (loading) return null;
+
+  if (showForm) {
+    return (
+      <ScreenContainer>
+        <View style={{ flex: 1 }}>
+          {/* Header */}
+          <View style={styles.formHeader}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={[styles.formTitle, { color: colors.foreground }]}>
+              Simula Saúde
+            </Text>
+            <Text style={[styles.formSubtitle, { color: colors.muted }]}>
+              Preencha o cadastro para acessar o simulador
+            </Text>
+          </View>
+
+          {/* Google Form iframe (web) */}
+          {Platform.OS === "web" ? (
+            <View style={{ flex: 1, marginHorizontal: 16 }}>
+              <iframe
+                src={GOOGLE_FORM_URL}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  border: "none",
+                  borderRadius: 12,
+                  minHeight: 500,
+                } as any}
+                frameBorder="0"
+                marginHeight={0}
+                marginWidth={0}
+              >
+                Carregando…
+              </iframe>
+            </View>
+          ) : (
+            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
+              <TouchableOpacity
+                onPress={() => Linking.openURL(GOOGLE_FORM_URL.replace("?embedded=true", ""))}
+                style={[styles.submitButton, { backgroundColor: colors.primary }]}
+              >
+                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
+                  Abrir Formulário de Cadastro
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Botão para prosseguir após preencher */}
+          <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 12 }}>
+            <TouchableOpacity
+              onPress={handleFormDone}
+              activeOpacity={0.85}
+              style={[styles.submitButton, { backgroundColor: colors.primary }]}
+            >
+              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
+                Já preenchi → Acessar Simulador
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
   return (
-    <ScreenContainer className="p-4">
-      <ScrollView 
+    <ScreenContainer>
+      <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 20 }}
       >
         {/* Header */}
-        <View className="items-center mb-6">
-          <Text className="text-6xl mb-3">🏥</Text>
-          <Text className="text-2xl font-bold text-foreground text-center">
-            Simulador Hapvida
+        <View style={styles.header}>
+          <Image
+            source={require("@/assets/images/icon.png")}
+            style={styles.logoSmall}
+            resizeMode="contain"
+          />
+          <Text style={[styles.title, { color: colors.foreground }]}>
+            Simula Saúde
           </Text>
-          <Text className="text-base text-muted text-center mt-1">
+          <Text style={[styles.subtitle, { color: colors.muted }]}>
             Tabelas de Planos de Saúde
           </Text>
         </View>
 
         {/* Instrução */}
-        <View className="bg-surface rounded-xl p-4 mb-6 border border-border">
-          <Text className="text-base font-semibold text-foreground mb-2">
+        <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={{ fontSize: 14, fontWeight: "600", color: colors.primary, marginBottom: 6 }}>
             Como funciona?
           </Text>
-          <Text className="text-sm text-muted leading-relaxed">
+          <Text style={{ fontSize: 13, color: colors.muted, lineHeight: 20 }}>
             1. Selecione a filial de tabela{"\n"}
             2. Escolha o tipo de contrato{"\n"}
             3. Defina o tipo de coparticipação{"\n"}
@@ -52,61 +155,64 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {/* Seleção de Filial */}
-        <Text className="text-lg font-bold text-foreground mb-3">
+        {/* Título Filiais */}
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
           Selecione a Filial de Tabela
         </Text>
-        
-        <View className="gap-2">
+
+        {/* Filiais */}
+        <View style={{ gap: 10 }}>
           {CITIES.map((city) => (
             <View key={city.id}>
               <TouchableOpacity
                 onPress={() => toggleExpand(city.id)}
-                className="bg-surface rounded-xl p-4 border border-border flex-row items-center justify-between"
-                style={{ opacity: 1 }}
+                activeOpacity={0.8}
+                style={[
+                  styles.cityCard,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: expandedCity === city.id ? colors.primary : colors.border,
+                    borderWidth: expandedCity === city.id ? 2 : 1,
+                  },
+                ]}
               >
-                <View className="flex-row items-center flex-1">
-                  <View className="w-10 h-10 bg-primary/10 rounded-full items-center justify-center mr-3">
-                    <Text className="text-lg">📍</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                  <View style={[styles.cityIcon, { backgroundColor: `${colors.primary}15` }]}>
+                    <Text style={{ fontSize: 18 }}>📍</Text>
                   </View>
-                  <View className="flex-1">
-                    <Text className="text-base font-semibold text-foreground">
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.cityName, { color: colors.foreground }]}>
                       {city.name}
                     </Text>
-                    <Text className="text-xs text-muted mt-1" numberOfLines={1}>
+                    <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2 }} numberOfLines={1}>
                       {city.commercializationArea.slice(0, 3).join(", ")}
                       {city.commercializationArea.length > 3 && "..."}
                     </Text>
                   </View>
                 </View>
-                <Text className="text-xl text-muted">
+                <Text style={{ fontSize: 20, color: colors.muted }}>
                   {expandedCity === city.id ? "▼" : "›"}
                 </Text>
               </TouchableOpacity>
 
-              {/* Área de Comercialização Expandida */}
               {expandedCity === city.id && (
-                <View className="bg-surface/50 rounded-b-xl border-x border-b border-border p-4 -mt-2">
-                  <Text className="text-xs font-medium text-primary mb-2">
+                <View style={[styles.expandedArea, { backgroundColor: colors.surface, borderColor: colors.primary }]}>
+                  <Text style={{ fontSize: 12, fontWeight: "600", color: colors.primary, marginBottom: 8 }}>
                     Cidades para comercializar:
                   </Text>
-                  <View className="flex-row flex-wrap gap-1 mb-4">
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
                     {city.commercializationArea.map((area, idx) => (
-                      <View 
-                        key={idx} 
-                        className="bg-primary/10 px-2 py-1 rounded"
-                      >
-                        <Text className="text-xs text-primary">{area}</Text>
+                      <View key={idx} style={[styles.areaTag, { backgroundColor: `${colors.primary}15` }]}>
+                        <Text style={{ fontSize: 11, color: colors.primary }}>{area}</Text>
                       </View>
                     ))}
                   </View>
-                  
                   <TouchableOpacity
                     onPress={() => handleCitySelect(city.id)}
-                    className="bg-primary py-3 rounded-lg items-center"
-                    style={{ opacity: 1 }}
+                    activeOpacity={0.85}
+                    style={[styles.selectButton, { backgroundColor: colors.primary }]}
                   >
-                    <Text className="text-white font-semibold">
+                    <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 15 }}>
                       Usar esta Filial →
                     </Text>
                   </TouchableOpacity>
@@ -119,41 +225,155 @@ export default function HomeScreen() {
         {/* Quiz Card */}
         <TouchableOpacity
           onPress={() => router.push("/table-quiz" as any)}
-          className="bg-warning/10 rounded-xl p-4 mt-6 border border-warning/30"
-          style={{ opacity: 1 }}
+          activeOpacity={0.85}
+          style={[styles.quizCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
-          <View className="flex-row items-center">
-            <Text className="text-2xl mr-3">🤔</Text>
-            <View className="flex-1">
-              <Text className="text-sm font-semibold text-warning">
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Text style={{ fontSize: 28, marginRight: 12 }}>🤔</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: "700", color: colors.foreground }}>
                 Não sabe qual tabela usar?
               </Text>
-              <Text className="text-xs text-muted mt-1">
+              <Text style={{ fontSize: 12, color: colors.muted, marginTop: 3 }}>
                 Responda algumas perguntas e descubra a tabela ideal para seu cliente
               </Text>
             </View>
-            <Text className="text-warning text-lg">›</Text>
+            <Text style={{ fontSize: 20, color: colors.muted }}>›</Text>
           </View>
         </TouchableOpacity>
 
-        {/* Info Card */}
-        <View className="bg-primary/10 rounded-xl p-4 mt-4">
-          <Text className="text-sm font-semibold text-primary mb-1">
+        {/* Footer */}
+        <View style={[styles.infoFooter, { backgroundColor: colors.surface }]}>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: colors.primary }}>
             Tabelas Atualizadas
           </Text>
-          <Text className="text-xs text-muted">
-            Valores válidos para contratos assinados a partir de 10/02/2026.
-            Super Simples e PME disponíveis.
+          <Text style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>
+            Vigência: 10/02/2026 a 31/03/2026
+          </Text>
+          <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2 }}>
+            Valores vigentes conforme tabelas oficiais Hapvida NDI
           </Text>
         </View>
 
-        {/* Versão do App */}
-        <View className="mt-6 items-center">
-          <Text className="text-xs text-muted/50">
-            SimulaSaúde v2.0.3 • Build 20260210
+        <View style={styles.footer}>
+          <Text style={{ fontSize: 11, color: colors.muted }}>
+            SimulaSaúde v2.0.5 • Build 20260211
           </Text>
         </View>
       </ScrollView>
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  formHeader: {
+    alignItems: "center",
+    paddingTop: 24,
+    marginBottom: 12,
+  },
+  logo: {
+    width: 64,
+    height: 64,
+    marginBottom: 10,
+    borderRadius: 16,
+  },
+  formTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  formSubtitle: {
+    fontSize: 13,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  submitButton: {
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  header: {
+    alignItems: "center",
+    paddingTop: 16,
+    marginBottom: 20,
+  },
+  logoSmall: {
+    width: 56,
+    height: 56,
+    marginBottom: 10,
+    borderRadius: 14,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 13,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  infoCard: {
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  cityCard: {
+    borderRadius: 14,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  cityIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  cityName: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  expandedArea: {
+    borderWidth: 2,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
+    padding: 16,
+    marginTop: -8,
+  },
+  areaTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  selectButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  quizCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 20,
+    borderWidth: 1,
+  },
+  infoFooter: {
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 12,
+  },
+  footer: {
+    alignItems: "center",
+    marginTop: 16,
+  },
+});

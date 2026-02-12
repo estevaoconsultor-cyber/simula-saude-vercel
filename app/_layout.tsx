@@ -21,7 +21,7 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
 import { SimulationProvider } from "@/contexts/SimulationContext";
-import { BrokerAuthProvider } from "@/contexts/BrokerAuthContext";
+import { UserProvider } from "@/contexts/UserContext";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -96,19 +96,19 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
-          <BrokerAuthProvider>
+          <UserProvider>
             <SimulationProvider>
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="login" options={{ presentation: "fullScreenModal" }} />
-                <Stack.Screen name="register" options={{ presentation: "fullScreenModal" }} />
+                <Stack.Screen name="register" />
+                <Stack.Screen name="simulator-home" />
                 <Stack.Screen name="results" />
                 <Stack.Screen name="plan-details" />
                 <Stack.Screen name="oauth/callback" />
               </Stack>
             </SimulationProvider>
-          </BrokerAuthProvider>
-          <StatusBar style="auto" />
+          </UserProvider>
+          <StatusBar style="dark" />
         </QueryClientProvider>
       </trpc.Provider>
     </GestureHandlerRootView>

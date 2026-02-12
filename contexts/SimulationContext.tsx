@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useReducer, ReactNode } from "react";
+import React, { createContext, useContext, useReducer, useEffect, ReactNode } from "react";
+import { Platform } from "react-native";
 import {
   City,
   ContractType,
@@ -37,7 +38,10 @@ type SimulationAction =
   | { type: "SELECT_ALL_PRODUCTS" }
   | { type: "CLEAR_PRODUCTS" }
   | { type: "RESET" }
-  | { type: "GO_TO_STEP"; payload: SimulationState["step"] };
+  | { type: "GO_TO_STEP"; payload: SimulationState["step"] }
+  | { type: "RESTORE_STATE"; payload: SimulationState };
+
+const STORAGE_KEY = "@simulation_state";
 
 // Estado inicial
 const initialState: SimulationState = {
@@ -60,50 +64,89 @@ const initialState: SimulationState = {
   step: "city",
 };
 
+// Helpers para sessionStorage (web only)
+function saveState(state: SimulationState) {
+  if (Platform.OS === "web" && typeof sessionStorage !== "undefined") {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (_) {
+      // ignore
+    }
+  }
+}
+
+function loadState(): SimulationState | null {
+  if (Platform.OS === "web" && typeof sessionStorage !== "undefined") {
+    try {
+      const stored = sessionStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Validate the parsed state has required fields
+        if (parsed && typeof parsed === "object" && "step" in parsed) {
+          return parsed as SimulationState;
+        }
+      }
+    } catch (_) {
+      // ignore
+    }
+  }
+  return null;
+}
+
 // Reducer
 function simulationReducer(
   state: SimulationState,
   action: SimulationAction
 ): SimulationState {
+  let newState: SimulationState;
+
   switch (action.type) {
+    case "RESTORE_STATE":
+      return action.payload;
+
     case "SET_CITY":
-      return {
+      newState = {
         ...state,
         city: action.payload,
         step: "contract",
       };
+      break;
     
     case "SET_CONTRACT_TYPE":
-      return {
+      newState = {
         ...state,
         contractType: action.payload,
         step: "coparticipation",
       };
+      break;
     
     case "SET_COPARTICIPATION":
-      return {
+      newState = {
         ...state,
         coparticipation: action.payload,
         step: "simulation",
       };
+      break;
     
     case "SET_LIVES":
-      return {
+      newState = {
         ...state,
         lives: {
           ...state.lives,
           [action.payload.ageRange]: Math.max(0, action.payload.count),
         },
       };
+      break;
     
     case "TOGGLE_PRODUCT":
       const isSelected = state.selectedProducts.includes(action.payload);
-      return {
+      newState = {
         ...state,
         selectedProducts: isSelected
           ? state.selectedProducts.filter((id) => id !== action.payload)
           : [...state.selectedProducts, action.payload],
       };
+      break;
     
     case "SELECT_ALL_PRODUCTS":
       if (state.city && state.contractType && state.coparticipation) {
@@ -112,31 +155,40 @@ function simulationReducer(
           state.contractType,
           state.coparticipation
         );
-        return {
+        newState = {
           ...state,
           selectedProducts: available.map((p) => p.id),
         };
+      } else {
+        return state;
       }
-      return state;
+      break;
     
     case "CLEAR_PRODUCTS":
-      return {
+      newState = {
         ...state,
         selectedProducts: [],
       };
+      break;
     
     case "RESET":
-      return initialState;
+      newState = initialState;
+      break;
     
     case "GO_TO_STEP":
-      return {
+      newState = {
         ...state,
         step: action.payload,
       };
+      break;
     
     default:
       return state;
   }
+
+  // Persist to sessionStorage after every state change
+  saveState(newState);
+  return newState;
 }
 
 // Contexto
@@ -157,7 +209,11 @@ const SimulationContext = createContext<SimulationContextType | undefined>(
 
 // Provider
 export function SimulationProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(simulationReducer, initialState);
+  const [state, dispatch] = useReducer(simulationReducer, initialState, () => {
+    // Try to restore from sessionStorage on initial load
+    const saved = loadState();
+    return saved || initialState;
+  });
   
   // Calcular total de vidas
   const totalLives = AGE_RANGES.reduce(

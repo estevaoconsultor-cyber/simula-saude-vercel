@@ -74,7 +74,7 @@ export default function LoginScreen() {
                 textAlign: "center",
               }}
             >
-              Simulador Hapvida
+              Simula Saúde
             </Text>
             <Text
               style={{

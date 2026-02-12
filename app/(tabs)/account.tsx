@@ -350,7 +350,7 @@ export default function AccountScreen() {
 
         {/* Versão */}
         <Text style={[styles.versionText, { color: colors.muted }]}>
-          Simulador Hapvida v2.1.0
+          Simula Saúde v2.1.0
         </Text>
       </ScrollView>
     </ScreenContainer>

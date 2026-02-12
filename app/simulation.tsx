@@ -350,6 +350,7 @@ export default function SimulationScreen() {
     const copartName = selectedCopart?.name || "";
     
     let productsHTML = "";
+    let detailHTML = "";
     productTotals.forEach(({ product, total, lives: productLives }) => {
       productsHTML += `
         <tr>
@@ -358,7 +359,64 @@ export default function SimulationScreen() {
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">R$ ${total.toFixed(2).replace('.', ',')}</td>
         </tr>
       `;
+      // Detalhamento por faixa etária
+      const ageGroups = new Map<string, { count: number; unitPrice: number }>();
+      productLives.forEach(life => {
+        const price = getProductPrice(state.city!, state.contractType!, state.coparticipation!, life.productId, life.ageRange) || 0;
+        const key = life.ageRange;
+        const existing = ageGroups.get(key);
+        if (existing) {
+          existing.count++;
+        } else {
+          ageGroups.set(key, { count: 1, unitPrice: price });
+        }
+      });
+      detailHTML += `<div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 6px;">`;
+      detailHTML += `<strong style="color: #0066CC;">${product.name}</strong>`;
+      if (product.category === 'premium') {
+        detailHTML += `<span style="font-size:11px; color:#666; margin-left:8px;">Abrangência Nacional | Reembolso disponível</span>`;
+      }
+      detailHTML += `<table style="width:100%; margin-top:6px; font-size:12px;"><tr style="background:#e8f4fd;"><th style="padding:4px 6px; text-align:left; color:#0066CC;">Faixa Etária</th><th style="padding:4px 6px; text-align:center; color:#0066CC;">Qtd</th><th style="padding:4px 6px; text-align:right; color:#0066CC;">Valor Unit.</th><th style="padding:4px 6px; text-align:right; color:#0066CC;">Subtotal</th></tr>`;
+      ageGroups.forEach((data, age) => {
+        detailHTML += `<tr><td style="padding:3px 6px;">${age} anos</td><td style="padding:3px 6px; text-align:center;">${data.count}</td><td style="padding:3px 6px; text-align:right;">R$ ${data.unitPrice.toFixed(2).replace('.', ',')}</td><td style="padding:3px 6px; text-align:right; font-weight:600;">R$ ${(data.count * data.unitPrice).toFixed(2).replace('.', ',')}</td></tr>`;
+      });
+      detailHTML += `</table></div>`;
     });
+
+    // Copay por produto
+    const copayTotalData: Record<string, { consultaEletiva: string; consultaUrgencia: string; examSimples: string; examComplexo: string; terapiaEsp: string; demaisTerapias: string; internacao: string }> = {
+      'Smart Ambulatorial': { consultaEletiva: '30% lim R$ 30', consultaUrgencia: '40% lim R$ 80', examSimples: '30% lim R$ 20', examComplexo: '30% lim R$ 100', terapiaEsp: 'Fixo R$ 78,87', demaisTerapias: '40% lim R$ 60', internacao: '-' },
+      'Nosso Médico': { consultaEletiva: '30% lim R$ 30', consultaUrgencia: '40% lim R$ 80', examSimples: '30% lim R$ 20', examComplexo: '30% lim R$ 100', terapiaEsp: 'Fixo R$ 78,87', demaisTerapias: '40% lim R$ 60', internacao: 'R$ 180' },
+      'Smart 200': { consultaEletiva: '30% lim R$ 30', consultaUrgencia: '40% lim R$ 80', examSimples: '30% lim R$ 20', examComplexo: '30% lim R$ 100', terapiaEsp: 'Fixo R$ 78,87', demaisTerapias: '40% lim R$ 60', internacao: 'R$ 180' },
+      'Smart 300': { consultaEletiva: '30% lim R$ 32,50', consultaUrgencia: '40% lim R$ 90', examSimples: '30% lim R$ 25', examComplexo: '30% lim R$ 105', terapiaEsp: 'Fixo R$ 78,87', demaisTerapias: '40% lim R$ 65', internacao: 'R$ 250' },
+      'Smart 500': { consultaEletiva: '30% lim R$ 32,50', consultaUrgencia: '40% lim R$ 90', examSimples: '30% lim R$ 25', examComplexo: '30% lim R$ 105', terapiaEsp: 'Fixo R$ 78,87', demaisTerapias: '40% lim R$ 65', internacao: 'R$ 250' },
+      'Advance': { consultaEletiva: '30% lim R$ 35', consultaUrgencia: '30% lim R$ 120', examSimples: '30% lim R$ 35', examComplexo: '30% lim R$ 130', terapiaEsp: 'Fixo R$ 85,22', demaisTerapias: '30% lim R$ 70', internacao: 'R$ 320' },
+      'Premium': { consultaEletiva: '30% lim R$ 55', consultaUrgencia: '40% lim R$ 130', examSimples: '30% lim R$ 35', examComplexo: '30% lim R$ 130', terapiaEsp: 'Fixo R$ 129,04', demaisTerapias: '40% lim R$ 70', internacao: 'R$ 400' },
+      'Infinity': { consultaEletiva: '30% lim R$ 90', consultaUrgencia: '40% lim R$ 200', examSimples: '30% lim R$ 45', examComplexo: '30% lim R$ 150', terapiaEsp: 'Fixo R$ 129,04', demaisTerapias: '40% lim R$ 90', internacao: 'R$ 550' },
+    };
+
+    // Gerar tabela de copay para os produtos selecionados
+    let copayHTML = '';
+    if (copartName.includes('Total')) {
+      const selectedProductNames = productTotals.map(pt => pt.product.name);
+      const matchedCopay = selectedProductNames.map(name => {
+        const key = Object.keys(copayTotalData).find(k => name.toLowerCase().includes(k.toLowerCase()));
+        return key ? { name, data: copayTotalData[key] } : null;
+      }).filter(Boolean);
+      if (matchedCopay.length > 0) {
+        copayHTML = `<div style="margin: 15px 0;"><h3 style="font-size: 14px; color: #333; margin-bottom: 8px;">Tabela de Coparticipação Total</h3><table style="font-size: 11px;"><tr style="background: #0066CC; color: white;"><th style="padding: 6px;">Procedimento</th>`;
+        matchedCopay.forEach(mc => { copayHTML += `<th style="padding: 6px; text-align: center;">${mc!.name}</th>`; });
+        copayHTML += `</tr>`;
+        const procedures = ['consultaEletiva', 'consultaUrgencia', 'examSimples', 'examComplexo', 'terapiaEsp', 'demaisTerapias', 'internacao'];
+        const procNames = ['Consultas Eletivas', 'Consultas Urgência', 'Exames Simples', 'Exames Complexos', 'Terapias Especiais', 'Demais Terapias', 'Internações*'];
+        procedures.forEach((proc, i) => {
+          copayHTML += `<tr style="${i % 2 === 0 ? 'background: #f8f9fa;' : ''}"><td style="padding: 5px 6px;">${procNames[i]}</td>`;
+          matchedCopay.forEach(mc => { copayHTML += `<td style="padding: 5px 6px; text-align: center;">${(mc!.data as any)[proc]}</td>`; });
+          copayHTML += `</tr>`;
+        });
+        copayHTML += `</table><p style="font-size: 10px; color: #888; margin-top: 4px;">* Internação na rede credenciada. Cobrança por procedimento realizado.</p></div>`;
+      }
+    }
 
     return `
       <!DOCTYPE html>
@@ -441,14 +499,30 @@ export default function SimulationScreen() {
           </tbody>
         </table>
 
+        <h3 style="margin: 15px 0 8px; font-size: 14px; color: #333;">Detalhamento por Faixa Etária</h3>
+        ${detailHTML}
+
+        ${copayHTML}
+
         <div class="benefits">
-          <h3>Por que escolher a Hapvida?</h3>
+          <h3>Hospitais de Referência em São Paulo</h3>
           <ul>
-            <li><strong>Maior rede própria do Brasil</strong> - Hospitais, clínicas e laboratórios próprios</li>
-            <li><strong>Atendimento humanizado</strong> - Profissionais qualificados e dedicados</li>
-            <li><strong>Tecnologia de ponta</strong> - Equipamentos modernos e telemedicina</li>
-            <li><strong>Cobertura nacional</strong> - Presente em todas as regiões do país</li>
-            <li><strong>Melhor custo-benefício</strong> - Qualidade premium com preços acessíveis</li>
+            <li><strong>Infinity</strong>: BP Mirante, Albert Einstein, Sírio Libanês, Sabará, Pro Matre</li>
+            <li><strong>Premium 900</strong>: São Luiz Morumbi, São Luiz Itaim, São Luiz Anália Franco, Santa Joana, Sabará</li>
+            <li><strong>Premium Care</strong>: Oswaldo Cruz, Santa Joana, Santa Catarina, 9 de Julho, Delboni</li>
+            <li><strong>Advance 700</strong>: São Camilo, Nipo Brasileiro, Leforte</li>
+            <li><strong>Advance 600</strong>: Santa Paula, Nipo Brasileiro, São Luiz SBC, Christovão da Gama</li>
+          </ul>
+        </div>
+
+        <div class="benefits" style="background: #fff3e0;">
+          <h3 style="color: #FF6B00;">Por que escolher a Hapvida?</h3>
+          <ul>
+            <li><strong>Maior rede própria do Brasil</strong> - +750 unidades próprias</li>
+            <li><strong>Atendimento humanizado</strong> - Profissionais qualificados</li>
+            <li><strong>Tecnologia de ponta</strong> - Telemedicina 24h</li>
+            <li><strong>Cobertura nacional</strong> - Presente em todas as regiões</li>
+            <li><strong>Produtos PPO</strong> - Advance, Premium e Infinity com reembolso e assistência viagem</li>
           </ul>
         </div>
 

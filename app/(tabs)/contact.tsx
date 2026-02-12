@@ -157,17 +157,15 @@ export default function ContactScreen() {
         <View className="flex-row gap-2">
           <TouchableOpacity
             onPress={() => openWhatsApp(member.whatsapp, member.name)}
-            className="w-9 h-9 bg-success rounded-lg items-center justify-center"
-            style={{ opacity: 1 }}
+            style={{ width: 36, height: 36, backgroundColor: '#EBF5FB', borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#D4E8F2' }}
           >
-            <Text className="text-white text-sm">📱</Text>
+            <Text style={{ color: '#0a7ea4', fontSize: 14 }}>📱</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => openEmail(member.email, member.name)}
-            className="w-9 h-9 bg-primary rounded-lg items-center justify-center"
-            style={{ opacity: 1 }}
+            style={{ width: 36, height: 36, backgroundColor: '#EBF5FB', borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#D4E8F2' }}
           >
-            <Text className="text-white text-sm">✉️</Text>
+            <Text style={{ color: '#0a7ea4', fontSize: 14 }}>✉️</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -220,20 +218,18 @@ export default function ContactScreen() {
                 e.stopPropagation();
                 openWhatsApp(team.senior.whatsapp, team.senior.name);
               }}
-              className="flex-1 bg-success py-2.5 rounded-lg flex-row items-center justify-center"
-              style={{ opacity: 1 }}
+              style={{ flex: 1, backgroundColor: '#EBF5FB', paddingVertical: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#D4E8F2' }}
             >
-              <Text className="text-white font-medium text-sm">📱 WhatsApp</Text>
+              <Text style={{ color: '#0a7ea4', fontWeight: '600', fontSize: 14 }}>📱 WhatsApp</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={(e) => {
                 e.stopPropagation();
                 openEmail(team.senior.email, team.senior.name);
               }}
-              className="flex-1 bg-primary py-2.5 rounded-lg flex-row items-center justify-center"
-              style={{ opacity: 1 }}
+              style={{ flex: 1, backgroundColor: '#EBF5FB', paddingVertical: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#D4E8F2' }}
             >
-              <Text className="text-white font-medium text-sm">✉️ E-mail</Text>
+              <Text style={{ color: '#0a7ea4', fontWeight: '600', fontSize: 14 }}>✉️ E-mail</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -277,20 +273,18 @@ export default function ContactScreen() {
         {executive.whatsapp && (
           <TouchableOpacity
             onPress={() => openWhatsApp(executive.whatsapp, executive.name)}
-            className="flex-1 bg-success py-3 rounded-lg flex-row items-center justify-center"
-            style={{ opacity: 1 }}
+            style={{ flex: 1, backgroundColor: '#EBF5FB', paddingVertical: 12, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#D4E8F2' }}
           >
-            <Text className="text-white font-medium">📱 WhatsApp</Text>
+            <Text style={{ color: '#0a7ea4', fontWeight: '600' }}>📱 WhatsApp</Text>
           </TouchableOpacity>
         )}
 
         {executive.email && (
           <TouchableOpacity
             onPress={() => openEmail(executive.email, executive.name)}
-            className="flex-1 bg-primary py-3 rounded-lg flex-row items-center justify-center"
-            style={{ opacity: 1 }}
+            style={{ flex: 1, backgroundColor: '#EBF5FB', paddingVertical: 12, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#D4E8F2' }}
           >
-            <Text className="text-white font-medium">✉️ E-mail</Text>
+            <Text style={{ color: '#0a7ea4', fontWeight: '600' }}>✉️ E-mail</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -451,10 +445,9 @@ export default function ContactScreen() {
                     const manager = getManagerContact(selectedBroker.manager);
                     if (manager) openWhatsApp(manager.whatsapp, manager.name);
                   }}
-                  className="flex-1 bg-success py-3 rounded-lg flex-row items-center justify-center"
-                  style={{ opacity: 1 }}
+                  style={{ flex: 1, backgroundColor: '#EBF5FB', paddingVertical: 12, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#D4E8F2' }}
                 >
-                  <Text className="text-white font-medium">📱 WhatsApp</Text>
+                  <Text style={{ color: '#0a7ea4', fontWeight: '600' }}>📱 WhatsApp</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -462,10 +455,9 @@ export default function ContactScreen() {
                     const manager = getManagerContact(selectedBroker.manager);
                     if (manager) openEmail(manager.email, manager.name);
                   }}
-                  className="flex-1 bg-primary py-3 rounded-lg flex-row items-center justify-center"
-                  style={{ opacity: 1 }}
+                  style={{ flex: 1, backgroundColor: '#EBF5FB', paddingVertical: 12, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#D4E8F2' }}
                 >
-                  <Text className="text-white font-medium">✉️ E-mail</Text>
+                  <Text style={{ color: '#0a7ea4', fontWeight: '600' }}>✉️ E-mail</Text>
                 </TouchableOpacity>
               </View>
             ) : (

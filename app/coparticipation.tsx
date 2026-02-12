@@ -224,9 +224,10 @@ export default function CoparticipationScreen() {
             <Text className="text-xs text-muted leading-relaxed">
               • Consultas Eletivas: Sem coparticipação{"\n"}
               • Consultas de Urgência: Sem coparticipação{"\n"}
-              • Exames: Sem coparticipação{"\n"}
-              • Terapias Especiais: Valor fixo R$ 70,00{"\n"}
-              • Demais Terapias: 40% limitado a R$ 60,00{"\n"}
+              • Exames Simples: Sem coparticipação{"\n"}
+              • Exames Complexos: Sem coparticipação{"\n"}
+              • Terapias Especiais: Valor fixo R$ 78,87 a R$ 129,04{"\n"}
+              • Demais Terapias: 30-40% limitado a R$ 60,00 a R$ 90,00{"\n"}
               • Internações: Sem coparticipação
             </Text>
           </View>
@@ -236,13 +237,14 @@ export default function CoparticipationScreen() {
               Coparticipação Total
             </Text>
             <Text className="text-xs text-muted leading-relaxed">
-              • Consultas Eletivas: 30% limitado a R$ 30,00{"\n"}
-              • Consultas de Urgência: 40% limitado a R$ 80,00{"\n"}
-              • Exames Simples: 30% limitado a R$ 20,00{"\n"}
-              • Exames Complexos: 30% limitado a R$ 100,00{"\n"}
-              • Terapias Especiais: Valor fixo R$ 70,00{"\n"}
-              • Demais Terapias: 40% limitado a R$ 60,00{"\n"}
-              • Internações: R$ 180,00 a R$ 320,00
+              • Consultas Eletivas: 30% lim R$ 30,00 a R$ 90,00{"\n"}
+              • Consultas de Urgência: 30-40% lim R$ 80,00 a R$ 200,00{"\n"}
+              • Exames Simples: 30% lim R$ 20,00 a R$ 45,00{"\n"}
+              • Exames Complexos: 30% lim R$ 100,00 a R$ 150,00{"\n"}
+              • Terapias Especiais: Valor fixo R$ 78,87 a R$ 129,04{"\n"}
+              • Demais Terapias: 30-40% lim R$ 60,00 a R$ 90,00{"\n"}
+              • Internações*: R$ 180,00 a R$ 550,00{"\n"}
+              (Valores variam conforme o produto)
             </Text>
           </View>
         </View>
