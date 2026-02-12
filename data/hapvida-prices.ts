@@ -310,16 +310,11 @@ export const PRODUCTS: Product[] = [
   // Premium 900 (PME)
   { id: "premium-900-apt-total", name: "Premium 900 Apto (Reemb. Total)", shortName: "P900 A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
   // Premium 900.1
-  { id: "premium-900-1-enf-total", name: "Premium 900.1 Enf (Reemb. Total)", shortName: "Prem E T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "total" },
-  { id: "premium-900-1-enf-parcial", name: "Premium 900.1 Enf (Reemb. Parcial)", shortName: "Prem E P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "parcial" },
   { id: "premium-900-1-apt-total", name: "Premium 900.1 Apto (Reemb. Total)", shortName: "Prem A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
-  { id: "premium-900-1-apt-parcial", name: "Premium 900.1 Apto (Reemb. Parcial)", shortName: "Prem A P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
   // Premium 900 Care (PME)
   { id: "premium-900-care-apt-total", name: "Premium 900 Care Apto (Reemb. Total)", shortName: "P900C A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
   { id: "premium-900-care-apt-parcial", name: "Premium 900 Care Apto (Reemb. Parcial)", shortName: "P900C A P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
   // Premium 900.1 Care
-  { id: "premium-900-1-care-enf-total", name: "Premium 900.1 Care Enf (Reemb. Total)", shortName: "Care E T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "total" },
-  { id: "premium-900-1-care-enf-parcial", name: "Premium 900.1 Care Enf (Reemb. Parcial)", shortName: "Care E P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "ENFERM", hasReimbursement: true, reimbursementType: "parcial" },
   { id: "premium-900-1-care-apt-total", name: "Premium 900.1 Care Apto (Reemb. Total)", shortName: "Care A T", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "total" },
   { id: "premium-900-1-care-apt-parcial", name: "Premium 900.1 Care Apto (Reemb. Parcial)", shortName: "Care A P", category: "premium", segmentation: "AMB+HOSP+OBST", accommodation: "APART", hasReimbursement: true, reimbursementType: "parcial" },
   // Infinity (PME)
@@ -478,29 +473,17 @@ const SAO_PAULO_SUPER_SIMPLES_2_29_MEI_PARCIAL: Record<string, PriceTable> = {
     "54-58": 2262.86,
     "59+": 3600.24,
   },
-  "premium-900-1-care-enf-parcial": {
-    "00-18": 512.38,
-    "19-23": 599.48,
-    "24-28": 731.36,
-    "29-33": 877.64,
-    "34-38": 921.53,
-    "39-43": 1013.68,
-    "44-48": 1267.11,
-    "49-53": 1532.02,
-    "54-58": 1916.31,
-    "59+": 3048.87,
-  },
-  "premium-900-1-care-enf-total": {
-    "00-18": 605.04,
-    "19-23": 969.71,
-    "24-28": 1183.04,
-    "29-33": 1419.67,
-    "34-38": 1490.67,
-    "39-43": 1639.72,
-    "44-48": 2049.66,
-    "49-53": 2476.18,
-    "54-58": 3099.81,
-    "59+": 4931.83,
+  "premium-900-1-apt-total": {
+    "00-18": 637.41,
+    "19-23": 745.77,
+    "24-28": 909.84,
+    "29-33": 1091.81,
+    "34-38": 1146.40,
+    "39-43": 1261.04,
+    "44-48": 1576.30,
+    "49-53": 1905.90,
+    "54-58": 2383.90,
+    "59+": 3792.78,
   },
   "smart-200": {
     "00-18": 134.84,
