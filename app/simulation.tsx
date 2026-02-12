@@ -27,6 +27,7 @@ import {
   getProductPrice,
 } from "@/data/hapvida-prices";
 import { useColors } from "@/hooks/use-colors";
+import { HAPVIDA_LOGO_B64, REDE_PROPRIA_MAPA_B64 } from "@/data/pdf-images";
 
 type LiveType = "titular" | "dependente";
 
@@ -35,6 +36,22 @@ interface LiveEntry {
   type: LiveType;
   ageRange: AgeRange;
   productId: string;
+}
+
+type SimulationStatus = 'novo' | 'enviado' | 'negociacao' | 'fechado' | 'perdido';
+
+const STATUS_CONFIG: Record<SimulationStatus, { label: string; color: string; bgColor: string }> = {
+  novo: { label: 'Novo', color: '#0066CC', bgColor: '#e8f4fd' },
+  enviado: { label: 'Enviado', color: '#F59E0B', bgColor: '#FEF3C7' },
+  negociacao: { label: 'Em Negociação', color: '#8B5CF6', bgColor: '#EDE9FE' },
+  fechado: { label: 'Fechado', color: '#22C55E', bgColor: '#DCFCE7' },
+  perdido: { label: 'Perdido', color: '#EF4444', bgColor: '#FEE2E2' },
+};
+
+interface BrokerInfo {
+  nome: string;
+  telefone: string;
+  email: string;
 }
 
 interface SavedSimulation {
@@ -47,6 +64,8 @@ interface SavedSimulation {
   coparticipation: string;
   lives: LiveEntry[];
   grandTotal: number;
+  status?: SimulationStatus;
+  notes?: string;
 }
 
 // Contador de quantidade por produto no modal
@@ -56,6 +75,7 @@ interface ProductQuantity {
 }
 
 const STORAGE_KEY = "@hapvida_saved_simulations";
+const BROKER_KEY = "@hapvida_broker_info";
 
 export default function SimulationScreen() {
   const router = useRouter();
@@ -97,16 +117,98 @@ export default function SimulationScreen() {
   // Estado de loading para PDF
   const [isExporting, setIsExporting] = useState(false);
 
+  // Dados do corretor para PDF
+  const [brokerInfo, setBrokerInfo] = useState<BrokerInfo>({ nome: '', telefone: '', email: '' });
+  const [showBrokerModal, setShowBrokerModal] = useState(false);
+
+  // Status e notas dos orçamentos
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
+  const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
+  const [tempNotes, setTempNotes] = useState('');
+
+  // Comparação de orçamentos
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+
+  // Filtro de orçamentos
+  const [statusFilter, setStatusFilter] = useState<SimulationStatus | 'todos'>('todos');
+  const [searchFilter, setSearchFilter] = useState('');
+
   const selectedCity = CITIES.find((c) => c.id === state.city);
   const selectedContract = CONTRACT_TYPES.find((c) => c.id === state.contractType);
   const selectedCopart = COPARTICIPATION_TYPES.find(
     (c) => c.id === state.coparticipation
   );
 
-  // Carregar simulações salvas
+  // Carregar simulações salvas e dados do corretor
   useEffect(() => {
     loadSavedSimulations();
+    loadBrokerInfo();
   }, []);
+
+  const loadBrokerInfo = async () => {
+    try {
+      const saved = await AsyncStorage.getItem(BROKER_KEY);
+      if (saved) setBrokerInfo(JSON.parse(saved));
+    } catch (e) { console.warn('Erro ao carregar dados do corretor:', e); }
+  };
+
+  const saveBrokerInfo = async (info: BrokerInfo) => {
+    try {
+      await AsyncStorage.setItem(BROKER_KEY, JSON.stringify(info));
+      setBrokerInfo(info);
+    } catch (e) { console.warn('Erro ao salvar dados do corretor:', e); }
+  };
+
+  // Atualizar status do orçamento
+  const updateSimulationStatus = async (simId: string, status: SimulationStatus) => {
+    const updated = savedSimulations.map(s => s.id === simId ? { ...s, status } : s);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    setSavedSimulations(updated);
+    setEditingStatusId(null);
+  };
+
+  // Salvar notas do orçamento
+  const saveSimulationNotes = async (simId: string, notes: string) => {
+    const updated = savedSimulations.map(s => s.id === simId ? { ...s, notes } : s);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    setSavedSimulations(updated);
+    setEditingNotesId(null);
+  };
+
+  // Compartilhar via WhatsApp
+  const shareViaWhatsApp = (sim: SavedSimulation) => {
+    const cityName = CITIES.find(c => c.id === sim.city)?.name || '';
+    const text = `*Orçamento - ${sim.companyName}*\n\n` +
+      `Cidade: ${cityName}\n` +
+      `Vidas: ${sim.lives.length}\n` +
+      `Valor Total: R$ ${sim.grandTotal.toFixed(2).replace('.', ',')}\n` +
+      `Data Prevista: ${sim.expectedDate}\n\n` +
+      (brokerInfo.nome ? `Corretor: ${brokerInfo.nome}\n` : '') +
+      (brokerInfo.telefone ? `Tel: ${brokerInfo.telefone}\n` : '') +
+      (brokerInfo.email ? `Email: ${brokerInfo.email}` : '');
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    if (Platform.OS === 'web') {
+      window.open(url, '_blank');
+    }
+  };
+
+  // Toggle comparação
+  const toggleCompare = (simId: string) => {
+    setCompareIds(prev => {
+      if (prev.includes(simId)) return prev.filter(id => id !== simId);
+      if (prev.length >= 3) { Alert.alert('Limite', 'Selecione no máximo 3 orçamentos para comparar.'); return prev; }
+      return [...prev, simId];
+    });
+  };
+
+  // Filtrar simulações
+  const filteredSimulations = savedSimulations.filter(sim => {
+    if (statusFilter !== 'todos' && (sim.status || 'novo') !== statusFilter) return false;
+    if (searchFilter && !sim.companyName.toLowerCase().includes(searchFilter.toLowerCase())) return false;
+    return true;
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const loadSavedSimulations = async () => {
     try {
@@ -359,7 +461,7 @@ export default function SimulationScreen() {
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">R$ ${total.toFixed(2).replace('.', ',')}</td>
         </tr>
       `;
-      // Detalhamento por faixa etária
+      // Detalhamento por faixa etária - ORDENADO CRESCENTE
       const ageGroups = new Map<string, { count: number; unitPrice: number }>();
       productLives.forEach(life => {
         const price = getProductPrice(state.city!, state.contractType!, state.coparticipation!, life.productId, life.ageRange) || 0;
@@ -377,8 +479,14 @@ export default function SimulationScreen() {
         detailHTML += `<span style="font-size:11px; color:#666; margin-left:8px;">Abrangência Nacional | Reembolso disponível</span>`;
       }
       detailHTML += `<table style="width:100%; margin-top:6px; font-size:12px;"><tr style="background:#e8f4fd;"><th style="padding:4px 6px; text-align:left; color:#0066CC;">Faixa Etária</th><th style="padding:4px 6px; text-align:center; color:#0066CC;">Qtd</th><th style="padding:4px 6px; text-align:right; color:#0066CC;">Valor Unit.</th><th style="padding:4px 6px; text-align:right; color:#0066CC;">Subtotal</th></tr>`;
-      ageGroups.forEach((data, age) => {
-        detailHTML += `<tr><td style="padding:3px 6px;">${age} anos</td><td style="padding:3px 6px; text-align:center;">${data.count}</td><td style="padding:3px 6px; text-align:right;">R$ ${data.unitPrice.toFixed(2).replace('.', ',')}</td><td style="padding:3px 6px; text-align:right; font-weight:600;">R$ ${(data.count * data.unitPrice).toFixed(2).replace('.', ',')}</td></tr>`;
+      // Ordenar faixas etárias crescente
+      const sortedAges = Array.from(ageGroups.entries()).sort((a, b) => {
+        const orderMap: Record<string, number> = { '00-18': 0, '19-23': 1, '24-28': 2, '29-33': 3, '34-38': 4, '39-43': 5, '44-48': 6, '49-53': 7, '54-58': 8, '59+': 9 };
+        return (orderMap[a[0]] || 0) - (orderMap[b[0]] || 0);
+      });
+      sortedAges.forEach(([age, data]) => {
+        const label = AGE_RANGE_LABELS[age as AgeRange] || age;
+        detailHTML += `<tr><td style="padding:3px 6px;">${label}</td><td style="padding:3px 6px; text-align:center;">${data.count}</td><td style="padding:3px 6px; text-align:right;">R$ ${data.unitPrice.toFixed(2).replace('.', ',')}</td><td style="padding:3px 6px; text-align:right; font-weight:600;">R$ ${(data.count * data.unitPrice).toFixed(2).replace('.', ',')}</td></tr>`;
       });
       detailHTML += `</table></div>`;
     });
@@ -418,19 +526,28 @@ export default function SimulationScreen() {
       }
     }
 
+    // Dados do corretor para o rodapé
+    const brokerHTML = (brokerInfo.nome || brokerInfo.telefone || brokerInfo.email) ? `
+      <div style="background: #0066CC; color: white; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin: 0 0 8px; font-size: 14px; color: white;">Seu Consultor</h3>
+        ${brokerInfo.nome ? `<p style="margin: 3px 0; font-size: 13px;"><strong>${brokerInfo.nome}</strong></p>` : ''}
+        ${brokerInfo.telefone ? `<p style="margin: 3px 0; font-size: 12px;">Tel: ${brokerInfo.telefone}</p>` : ''}
+        ${brokerInfo.email ? `<p style="margin: 3px 0; font-size: 12px;">Email: ${brokerInfo.email}</p>` : ''}
+      </div>
+    ` : '';
+
     return `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Proposta Hapvida</title>
+        <title>Orçamento</title>
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; color: #333; font-size: 14px; }
           .header { text-align: center; margin-bottom: 25px; border-bottom: 3px solid #FF6B00; padding-bottom: 15px; }
-          .logo-text { font-size: 28px; font-weight: bold; color: #0066CC; margin-bottom: 5px; }
-          .logo-sub { font-size: 12px; color: #666; }
+          .header img { max-width: 200px; height: auto; margin-bottom: 8px; }
           .tagline { background: linear-gradient(135deg, #FF6B00, #0066CC); color: white; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: center; }
           .tagline h2 { margin: 0; font-size: 16px; font-weight: 600; }
           .tagline p { margin: 5px 0 0; font-size: 12px; opacity: 0.9; }
@@ -450,6 +567,8 @@ export default function SimulationScreen() {
           .benefits h3 { color: #0066CC; margin: 0 0 10px; font-size: 15px; }
           .benefits ul { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.8; }
           .benefits li { margin: 3px 0; }
+          .mapa-section { text-align: center; margin: 20px 0; page-break-before: always; }
+          .mapa-section img { max-width: 100%; height: auto; }
           .footer { text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 11px; color: #888; }
           @media print { 
             body { padding: 10px; } 
@@ -461,8 +580,7 @@ export default function SimulationScreen() {
       </head>
       <body>
         <div class="header">
-          <div class="logo-text">Hapvida</div>
-          <div class="logo-sub">NotreDame Intermédica</div>
+          <img src="${HAPVIDA_LOGO_B64}" alt="Logo" />
         </div>
 
         <div class="tagline">
@@ -470,7 +588,7 @@ export default function SimulationScreen() {
           <p>Mais de 750 unidades próprias e milhares de prestadores credenciados.</p>
         </div>
 
-        ${companyName ? `<div class="company-name">Proposta para: ${companyName}</div>` : ""}
+        ${companyName ? `<div class="company-name">Orçamento para: ${companyName}</div>` : ""}
         ${expectedDate ? `<div class="date-info">Data prevista: ${expectedDate}</div>` : ""}
 
         <div class="info-box">
@@ -511,24 +629,20 @@ export default function SimulationScreen() {
             <li><strong>Premium 900</strong>: São Luiz Morumbi, São Luiz Itaim, São Luiz Anália Franco, Santa Joana, Sabará</li>
             <li><strong>Premium Care</strong>: Oswaldo Cruz, Santa Joana, Santa Catarina, 9 de Julho, Delboni</li>
             <li><strong>Advance 700</strong>: São Camilo, Nipo Brasileiro, Leforte</li>
-            <li><strong>Advance 600</strong>: Santa Paula, Nipo Brasileiro, São Luiz SBC, Christovão da Gama</li>
+            <li><strong>Advance 600</strong>: Santa Paula, Nipo Brasileiro, São Luiz SBC, Christóvão da Gama</li>
           </ul>
         </div>
 
-        <div class="benefits" style="background: #fff3e0;">
-          <h3 style="color: #FF6B00;">Por que escolher a Hapvida?</h3>
-          <ul>
-            <li><strong>Maior rede própria do Brasil</strong> - +750 unidades próprias</li>
-            <li><strong>Atendimento humanizado</strong> - Profissionais qualificados</li>
-            <li><strong>Tecnologia de ponta</strong> - Telemedicina 24h</li>
-            <li><strong>Cobertura nacional</strong> - Presente em todas as regiões</li>
-            <li><strong>Produtos PPO</strong> - Advance, Premium e Infinity com reembolso e assistência viagem</li>
-          </ul>
+        <div class="mapa-section">
+          <h3 style="font-size: 16px; color: #0066CC; margin-bottom: 10px;">Rede Própria com Abrangência Nacional</h3>
+          <img src="${REDE_PROPRIA_MAPA_B64}" alt="Mapa Rede Própria" />
         </div>
+
+        ${brokerHTML}
 
         <div class="footer">
-          <p><strong>Hapvida NotreDame Intermédica</strong></p>
-          <p>Esta proposta tem validade de 30 dias. Valores sujeitos a alteração conforme análise cadastral.</p>
+          <p style="font-weight: bold; font-size: 12px; color: #333; margin-bottom: 8px;">ORÇAMENTO VÁLIDO ENQUANTO A TABELA NÃO SOFRER REAJUSTE</p>
+          <p>Valores sujeitos a alteração conforme análise cadastral.</p>
           <p>Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</p>
         </div>
       </body>
@@ -536,13 +650,19 @@ export default function SimulationScreen() {
     `;
   };
 
-  // Exportar PDF - funciona em iOS, Android e Web
-  const handleExportPDF = async () => {
+  // Abrir modal de dados do corretor antes de exportar PDF
+  const handleExportPDF = () => {
     if (totalLives === 0) {
       Alert.alert("Atenção", "Adicione pelo menos uma vida para exportar o PDF.");
       return;
     }
+    setShowBrokerModal(true);
+  };
 
+  // Exportar PDF após preencher dados do corretor
+  const doExportPDF = async () => {
+    setShowBrokerModal(false);
+    await saveBrokerInfo(brokerInfo);
     setIsExporting(true);
     
     try {
@@ -1287,80 +1407,215 @@ export default function SimulationScreen() {
         </View>
       </Modal>
 
-      {/* Modal de Simulações Salvas */}
+      {/* Modal de Dados do Corretor */}
+      <Modal
+        visible={showBrokerModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowBrokerModal(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-center items-center p-4">
+          <View className="bg-background rounded-2xl w-full max-w-md" style={{ backgroundColor: colors.background }}>
+            <View className="p-4 border-b border-border">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-lg font-bold text-foreground">Dados do Corretor</Text>
+                <TouchableOpacity onPress={() => setShowBrokerModal(false)}>
+                  <Text className="text-muted text-2xl">×</Text>
+                </TouchableOpacity>
+              </View>
+              <Text className="text-xs text-muted mt-1">Esses dados aparecerão no PDF do orçamento</Text>
+            </View>
+            <View className="p-4">
+              <Text className="text-sm font-medium text-foreground mb-1">Nome</Text>
+              <TextInput value={brokerInfo.nome} onChangeText={(t) => setBrokerInfo(prev => ({...prev, nome: t}))} placeholder="Seu nome" placeholderTextColor={colors.muted} className="bg-surface border border-border rounded-xl p-3 text-foreground mb-3" style={{ color: colors.foreground }} />
+              <Text className="text-sm font-medium text-foreground mb-1">Telefone</Text>
+              <TextInput value={brokerInfo.telefone} onChangeText={(t) => setBrokerInfo(prev => ({...prev, telefone: t}))} placeholder="(11) 99999-9999" placeholderTextColor={colors.muted} className="bg-surface border border-border rounded-xl p-3 text-foreground mb-3" style={{ color: colors.foreground }} keyboardType="phone-pad" />
+              <Text className="text-sm font-medium text-foreground mb-1">E-mail</Text>
+              <TextInput value={brokerInfo.email} onChangeText={(t) => setBrokerInfo(prev => ({...prev, email: t}))} placeholder="seu@email.com" placeholderTextColor={colors.muted} className="bg-surface border border-border rounded-xl p-3 text-foreground mb-4" style={{ color: colors.foreground }} keyboardType="email-address" />
+              <TouchableOpacity onPress={doExportPDF} className="bg-primary py-3 rounded-xl items-center" style={{ opacity: 1 }}>
+                <Text className="text-white font-semibold">📄 Gerar PDF</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Simulações Salvas - MELHORADO */}
       <Modal
         visible={showSavedModal}
         transparent
         animationType="slide"
-        onRequestClose={() => setShowSavedModal(false)}
+        onRequestClose={() => { setShowSavedModal(false); setCompareMode(false); setCompareIds([]); }}
       >
         <View className="flex-1 bg-black/50 justify-end">
-          <View 
-            className="bg-background rounded-t-3xl max-h-[80%]"
-            style={{ backgroundColor: colors.background }}
-          >
+          <View className="bg-background rounded-t-3xl max-h-[90%]" style={{ backgroundColor: colors.background }}>
             <View className="p-4 border-b border-border">
               <View className="flex-row items-center justify-between">
-                <Text className="text-lg font-bold text-foreground">
-                  📂 Simulações Salvas
-                </Text>
-                <TouchableOpacity onPress={() => setShowSavedModal(false)}>
+                <Text className="text-lg font-bold text-foreground">📂 Orçamentos Salvos</Text>
+                <TouchableOpacity onPress={() => { setShowSavedModal(false); setCompareMode(false); setCompareIds([]); }}>
+                  <Text className="text-muted text-2xl">×</Text>
+                </TouchableOpacity>
+              </View>
+              {/* Filtro por status */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3">
+                <View className="flex-row gap-2">
+                  <TouchableOpacity onPress={() => setStatusFilter('todos')} style={{ backgroundColor: statusFilter === 'todos' ? '#0066CC' : '#f0f0f0', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
+                    <Text style={{ color: statusFilter === 'todos' ? '#fff' : '#666', fontSize: 12, fontWeight: '600' }}>Todos</Text>
+                  </TouchableOpacity>
+                  {(Object.keys(STATUS_CONFIG) as SimulationStatus[]).map(s => (
+                    <TouchableOpacity key={s} onPress={() => setStatusFilter(s)} style={{ backgroundColor: statusFilter === s ? STATUS_CONFIG[s].color : STATUS_CONFIG[s].bgColor, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
+                      <Text style={{ color: statusFilter === s ? '#fff' : STATUS_CONFIG[s].color, fontSize: 12, fontWeight: '600' }}>{STATUS_CONFIG[s].label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+              {/* Busca e modo comparação */}
+              <View className="flex-row items-center gap-2 mt-2">
+                <TextInput value={searchFilter} onChangeText={setSearchFilter} placeholder="Buscar empresa..." placeholderTextColor={colors.muted} className="flex-1 bg-surface border border-border rounded-lg p-2 text-foreground text-sm" style={{ color: colors.foreground }} />
+                <TouchableOpacity onPress={() => { setCompareMode(!compareMode); setCompareIds([]); }} style={{ backgroundColor: compareMode ? '#0066CC' : '#f0f0f0', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 }}>
+                  <Text style={{ color: compareMode ? '#fff' : '#666', fontSize: 12, fontWeight: '600' }}>Comparar</Text>
+                </TouchableOpacity>
+              </View>
+              {compareMode && compareIds.length >= 2 && (
+                <TouchableOpacity onPress={() => setShowCompareModal(true)} className="bg-primary py-2 rounded-lg items-center mt-2" style={{ opacity: 1 }}>
+                  <Text className="text-white text-sm font-semibold">Ver Comparação ({compareIds.length})</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            <ScrollView className="p-4">
+              {filteredSimulations.length === 0 ? (
+                <View className="py-8">
+                  <Text className="text-muted text-center">Nenhum orçamento encontrado.</Text>
+                </View>
+              ) : (
+                filteredSimulations.map((sim) => {
+                  const simStatus = sim.status || 'novo';
+                  const statusCfg = STATUS_CONFIG[simStatus];
+                  const isSelected = compareIds.includes(sim.id);
+                  return (
+                    <View key={sim.id} className="bg-surface rounded-xl p-4 mb-3 border" style={{ borderColor: isSelected ? '#0066CC' : colors.border, borderWidth: isSelected ? 2 : 1 }}>
+                      {/* Header com status */}
+                      <View className="flex-row items-start justify-between mb-2">
+                        <View className="flex-1">
+                          <View className="flex-row items-center gap-2 mb-1">
+                            {compareMode && (
+                              <TouchableOpacity onPress={() => toggleCompare(sim.id)} style={{ width: 22, height: 22, borderRadius: 4, borderWidth: 2, borderColor: isSelected ? '#0066CC' : '#ccc', backgroundColor: isSelected ? '#0066CC' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                                {isSelected && <Text style={{ color: '#fff', fontSize: 14, fontWeight: 'bold' }}>✓</Text>}
+                              </TouchableOpacity>
+                            )}
+                            <Text className="text-base font-semibold text-foreground">{sim.companyName}</Text>
+                          </View>
+                          <Text className="text-xs text-muted">📅 {sim.expectedDate} • {new Date(sim.createdAt).toLocaleDateString("pt-BR")}</Text>
+                          <Text className="text-xs text-muted">{sim.lives.length} vidas • {CITIES.find(c => c.id === sim.city)?.name}</Text>
+                        </View>
+                        <View className="items-end">
+                          <Text className="text-base font-bold text-primary">{formatCurrency(sim.grandTotal)}</Text>
+                          {/* Status badge */}
+                          <TouchableOpacity onPress={() => setEditingStatusId(editingStatusId === sim.id ? null : sim.id)} style={{ backgroundColor: statusCfg.bgColor, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, marginTop: 4 }}>
+                            <Text style={{ color: statusCfg.color, fontSize: 11, fontWeight: '600' }}>{statusCfg.label}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                      {/* Status selector */}
+                      {editingStatusId === sim.id && (
+                        <View className="flex-row flex-wrap gap-2 mb-3 mt-1">
+                          {(Object.keys(STATUS_CONFIG) as SimulationStatus[]).map(s => (
+                            <TouchableOpacity key={s} onPress={() => updateSimulationStatus(sim.id, s)} style={{ backgroundColor: simStatus === s ? STATUS_CONFIG[s].color : STATUS_CONFIG[s].bgColor, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                              <Text style={{ color: simStatus === s ? '#fff' : STATUS_CONFIG[s].color, fontSize: 11, fontWeight: '600' }}>{STATUS_CONFIG[s].label}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                      {/* Notas */}
+                      {editingNotesId === sim.id ? (
+                        <View className="mb-3">
+                          <TextInput value={tempNotes} onChangeText={setTempNotes} placeholder="Adicionar observações..." placeholderTextColor={colors.muted} multiline numberOfLines={3} className="bg-background border border-border rounded-lg p-2 text-foreground text-sm mb-2" style={{ color: colors.foreground, minHeight: 60 }} />
+                          <View className="flex-row gap-2">
+                            <TouchableOpacity onPress={() => saveSimulationNotes(sim.id, tempNotes)} className="flex-1 bg-success py-2 rounded-lg items-center" style={{ opacity: 1 }}>
+                              <Text className="text-white text-xs font-medium">Salvar</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setEditingNotesId(null)} className="bg-surface py-2 px-3 rounded-lg items-center border border-border" style={{ opacity: 1 }}>
+                              <Text className="text-muted text-xs">Cancelar</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      ) : sim.notes ? (
+                        <TouchableOpacity onPress={() => { setEditingNotesId(sim.id); setTempNotes(sim.notes || ''); }} className="mb-3">
+                          <Text className="text-xs text-muted italic">📝 {sim.notes}</Text>
+                        </TouchableOpacity>
+                      ) : null}
+                      {/* Botões de ação */}
+                      <View className="flex-row gap-2">
+                        <TouchableOpacity onPress={() => loadSimulation(sim)} className="flex-1 bg-primary py-2 rounded-lg items-center" style={{ opacity: 1 }}>
+                          <Text className="text-white text-xs font-medium">Carregar</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => shareViaWhatsApp(sim)} className="bg-success/20 px-3 py-2 rounded-lg items-center" style={{ opacity: 1 }}>
+                          <Text className="text-success text-xs font-medium">WhatsApp</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => { setEditingNotesId(sim.id); setTempNotes(sim.notes || ''); }} className="bg-surface px-3 py-2 rounded-lg items-center border border-border" style={{ opacity: 1 }}>
+                          <Text className="text-muted text-xs">📝</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => deleteSimulation(sim.id)} className="bg-error/10 px-3 py-2 rounded-lg items-center" style={{ opacity: 1 }}>
+                          <Text className="text-error text-xs">🗑️</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Comparação */}
+      <Modal
+        visible={showCompareModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCompareModal(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-end">
+          <View className="bg-background rounded-t-3xl max-h-[85%]" style={{ backgroundColor: colors.background }}>
+            <View className="p-4 border-b border-border">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-lg font-bold text-foreground">Comparação de Orçamentos</Text>
+                <TouchableOpacity onPress={() => setShowCompareModal(false)}>
                   <Text className="text-muted text-2xl">×</Text>
                 </TouchableOpacity>
               </View>
             </View>
-            
-            <ScrollView className="p-4">
-              {savedSimulations.length === 0 ? (
-                <View className="py-8">
-                  <Text className="text-muted text-center">
-                    Nenhuma simulação salva ainda.
-                  </Text>
+            <ScrollView className="p-4" horizontal>
+              <View>
+                {/* Header */}
+                <View className="flex-row">
+                  <View style={{ width: 120, padding: 8 }}><Text className="text-xs font-bold text-foreground">Item</Text></View>
+                  {compareIds.map(id => {
+                    const sim = savedSimulations.find(s => s.id === id);
+                    return <View key={id} style={{ width: 140, padding: 8, backgroundColor: '#e8f4fd', borderRadius: 8, marginLeft: 4 }}><Text className="text-xs font-bold text-primary" numberOfLines={1}>{sim?.companyName}</Text></View>;
+                  })}
                 </View>
-              ) : (
-                savedSimulations.map((sim) => (
-                  <View
-                    key={sim.id}
-                    className="bg-surface rounded-xl p-4 mb-3 border border-border"
-                  >
-                    <View className="flex-row items-start justify-between mb-2">
-                      <View className="flex-1">
-                        <Text className="text-base font-semibold text-foreground">
-                          {sim.companyName}
-                        </Text>
-                        <Text className="text-xs text-muted">
-                          📅 Previsão: {sim.expectedDate}
-                        </Text>
-                        <Text className="text-xs text-muted">
-                          Criado: {new Date(sim.createdAt).toLocaleDateString("pt-BR")}
-                        </Text>
-                      </View>
-                      <Text className="text-base font-bold text-primary">
-                        {formatCurrency(sim.grandTotal)}
-                      </Text>
-                    </View>
-                    <Text className="text-xs text-muted mb-3">
-                      {sim.lives.length} vidas • {CITIES.find(c => c.id === sim.city)?.name}
-                    </Text>
-                    <View className="flex-row gap-2">
-                      <TouchableOpacity
-                        onPress={() => loadSimulation(sim)}
-                        className="flex-1 bg-primary py-2 rounded-lg items-center"
-                        style={{ opacity: 1 }}
-                      >
-                        <Text className="text-white text-sm font-medium">Carregar</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => deleteSimulation(sim.id)}
-                        className="bg-error/10 px-4 py-2 rounded-lg items-center"
-                        style={{ opacity: 1 }}
-                      >
-                        <Text className="text-error text-sm font-medium">🗑️</Text>
-                      </TouchableOpacity>
-                    </View>
+                {/* Rows */}
+                {['Valor Total', 'Vidas', 'Cidade', 'Contrato', 'Data Prevista', 'Status'].map((label, i) => (
+                  <View key={label} className="flex-row" style={{ backgroundColor: i % 2 === 0 ? '#f8f9fa' : 'transparent' }}>
+                    <View style={{ width: 120, padding: 8 }}><Text className="text-xs text-muted">{label}</Text></View>
+                    {compareIds.map(id => {
+                      const sim = savedSimulations.find(s => s.id === id);
+                      if (!sim) return <View key={id} style={{ width: 140, padding: 8 }} />;
+                      const values = [
+                        formatCurrency(sim.grandTotal),
+                        `${sim.lives.length}`,
+                        CITIES.find(c => c.id === sim.city)?.name || '',
+                        CONTRACT_TYPES.find(c => c.id === sim.contractType)?.name || '',
+                        sim.expectedDate,
+                        STATUS_CONFIG[sim.status || 'novo'].label,
+                      ];
+                      return <View key={id} style={{ width: 140, padding: 8, marginLeft: 4 }}><Text className="text-xs text-foreground font-medium">{values[i]}</Text></View>;
+                    })}
                   </View>
-                ))
-              )}
+                ))}
+              </View>
             </ScrollView>
           </View>
         </View>
