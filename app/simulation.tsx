@@ -27,7 +27,7 @@ import {
   getProductPrice,
 } from "@/data/hapvida-prices";
 import { useColors } from "@/hooks/use-colors";
-import { HAPVIDA_LOGO_B64, REDE_PROPRIA_MAPA_B64 } from "@/data/pdf-images";
+import { HAPVIDA_LOGO_B64, REDE_HOSPITAIS_B64 } from "@/data/pdf-images";
 
 type LiveType = "titular" | "dependente";
 
@@ -635,7 +635,7 @@ export default function SimulationScreen() {
 
         <div class="mapa-section">
           <h3 style="font-size: 16px; color: #0066CC; margin-bottom: 10px;">Rede Própria com Abrangência Nacional</h3>
-          <img src="${REDE_PROPRIA_MAPA_B64}" alt="Mapa Rede Própria" />
+          <img src="${REDE_HOSPITAIS_B64}" alt="Mapa Rede Própria" />
         </div>
 
         ${brokerHTML}
