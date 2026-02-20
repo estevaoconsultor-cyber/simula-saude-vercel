@@ -235,6 +235,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
+    marginTop: 6,
     marginBottom: 12,
   },
   cityCard: {
@@ -276,8 +277,10 @@ const styles = StyleSheet.create({
   },
   quizCard: {
     borderRadius: 12,
-    padding: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
     marginTop: 20,
+    marginBottom: 16,
     borderWidth: 1,
   },
   infoFooter: {
