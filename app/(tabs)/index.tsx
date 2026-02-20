@@ -68,6 +68,26 @@ export default function HomeScreen() {
           </Text>
         </View>
 
+        {/* Quiz Card */}
+        <TouchableOpacity
+          onPress={() => router.push("/table-quiz" as any)}
+          activeOpacity={0.85}
+          style={[styles.quizCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Text style={{ fontSize: 28, marginRight: 12 }}>🤔</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: "700", color: colors.foreground }}>
+                Não sabe qual tabela usar?
+              </Text>
+              <Text style={{ fontSize: 12, color: colors.muted, marginTop: 3 }}>
+                Responda algumas perguntas e descubra a tabela ideal para seu cliente
+              </Text>
+            </View>
+            <Text style={{ fontSize: 20, color: colors.muted }}>›</Text>
+          </View>
+        </TouchableOpacity>
+
         {/* Título Filiais */}
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
           Selecione a Filial de Tabela
@@ -134,26 +154,6 @@ export default function HomeScreen() {
             </View>
           ))}
         </View>
-
-        {/* Quiz Card */}
-        <TouchableOpacity
-          onPress={() => router.push("/table-quiz" as any)}
-          activeOpacity={0.85}
-          style={[styles.quizCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={{ fontSize: 28, marginRight: 12 }}>🤔</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 14, fontWeight: "700", color: colors.foreground }}>
-                Não sabe qual tabela usar?
-              </Text>
-              <Text style={{ fontSize: 12, color: colors.muted, marginTop: 3 }}>
-                Responda algumas perguntas e descubra a tabela ideal para seu cliente
-              </Text>
-            </View>
-            <Text style={{ fontSize: 20, color: colors.muted }}>›</Text>
-          </View>
-        </TouchableOpacity>
 
         {/* Footer */}
         <View style={[styles.infoFooter, { backgroundColor: colors.surface }]}>
