@@ -5,7 +5,6 @@ import { SAO_PAULO_SS1V_PARCIAL, SAO_PAULO_SS1V_TOTAL, JUNDIAI_SS1V_PARCIAL, JUN
 import { SAO_PAULO_MEI_PARCIAL, SAO_PAULO_MEI_TOTAL, JUNDIAI_MEI_PARCIAL, JUNDIAI_MEI_TOTAL, MOGI_MEI_PARCIAL, MOGI_MEI_TOTAL, SANTOS_MEI_PARCIAL, SANTOS_MEI_TOTAL, SBC_MEI_PARCIAL, SBC_MEI_TOTAL } from "./super-simples-2a29-mei-prices";
 import { SAO_PAULO_SS2A29_DEMAIS_PARCIAL, SAO_PAULO_SS2A29_DEMAIS_TOTAL, JUNDIAI_SS2A29_DEMAIS_PARCIAL, JUNDIAI_SS2A29_DEMAIS_TOTAL, MOGI_DAS_CRUZES_SS2A29_DEMAIS_PARCIAL, MOGI_DAS_CRUZES_SS2A29_DEMAIS_TOTAL, SANTOS_SS2A29_DEMAIS_PARCIAL, SANTOS_SS2A29_DEMAIS_TOTAL, SAO_BERNARDO_SS2A29_DEMAIS_PARCIAL, SAO_BERNARDO_SS2A29_DEMAIS_TOTAL } from "./super-simples-2a29-demais-prices";
 import { AMERICANA_SS2A29_PRACAS_PARCIAL, AMERICANA_SS2A29_PRACAS_TOTAL, CAMPINAS_SS2A29_PRACAS_PARCIAL, CAMPINAS_SS2A29_PRACAS_TOTAL, SOROCABA_SS2A29_PRACAS_PARCIAL, SOROCABA_SS2A29_PRACAS_TOTAL, SJC_SS2A29_PRACAS_PARCIAL, SJC_SS2A29_PRACAS_TOTAL, RIO_SS2A29_PRACAS_PARCIAL, RIO_SS2A29_PRACAS_TOTAL } from "./super-simples-2a29-demais-pracas-prices";
-import { PRICE_OVERRIDES } from "./prices-overrides";
 // Dados extraídos das tabelas oficiais Hapvida
 // Gerado automaticamente em 03/02/2026
 // Valores válidos para contratos a partir de 10/02/2026
@@ -6005,335 +6004,6 @@ export const PRICES: Record<City, Partial<Record<ContractType, Record<Coparticip
   },
 };
 
-function applyPriceOverrides(
-  base: Record<City, Partial<Record<ContractType, Record<CoparticipationType, Record<string, PriceTable>>>>>,
-  overrides: Record<string, Record<string, Record<string, Record<string, Record<string, number>>>>>
-) {
-  for (const [city, cityData] of Object.entries(overrides)) {
-    for (const [contractType, contractData] of Object.entries(cityData)) {
-      for (const [copart, copartData] of Object.entries(contractData)) {
-        for (const [productId, table] of Object.entries(copartData)) {
-          const current =
-            base[city as City]?.[contractType as ContractType]?.[
-              copart as CoparticipationType
-            ]?.[productId] ?? {};
-
-          const merged: PriceTable = {
-            ...current,
-            ...table,
-          };
-
-          if (!base[city as City]) {
-            (base as any)[city] = {};
-          }
-          if (!base[city as City]![contractType as ContractType]) {
-            (base[city as City] as any)[contractType] = {};
-          }
-          if (!base[city as City]![contractType as ContractType]![copart as CoparticipationType]) {
-            (base[city as City]![contractType as ContractType] as any)[copart] = {};
-          }
-          (base[city as City]![contractType as ContractType]![copart as CoparticipationType] as any)[
-            productId
-          ] = merged;
-        }
-      }
-    }
-  }
-}
-
-applyPriceOverrides(PRICES, PRICE_OVERRIDES);
-
-export type TableId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-export type ContractCategory = "PF" | "PJ";
-export type ReimbursementOption = "SEM" | "TOTAL" | "PARCIAL";
-export type AccommodationOption = "ENFERMARIA" | "APARTAMENTO";
-
-export type RuleReasonCode =
-  | "INVALID_BRANCH_TABLE"
-  | "INVALID_CONTRACT_FOR_TABLE"
-  | "INVALID_PRODUCT_FOR_REGION"
-  | "INVALID_COPAY_FOR_TABLE"
-  | "INVALID_REIMBURSEMENT_FOR_PRODUCT"
-  | "INVALID_ACCOMMODATION_FOR_PRODUCT";
-
-export interface RuleKey {
-  city?: City;
-  tableId?: TableId;
-  contractType?: ContractType;
-  contractCategory?: ContractCategory;
-  coparticipation?: CoparticipationType;
-  productId?: string;
-  reimbursement?: ReimbursementOption;
-  accommodation?: AccommodationOption;
-}
-
-export interface AllowedOptions {
-  tableIds: TableId[];
-  contractTypes: ContractType[];
-  coparticipations: CoparticipationType[];
-  products: string[];
-  reimbursements: ReimbursementOption[];
-  accommodations: AccommodationOption[];
-}
-
-export interface EligibilityResult {
-  valid: boolean;
-  reasonCode?: RuleReasonCode;
-  allowedOptions: AllowedOptions;
-}
-
-export interface PricingLookupInput extends Required<Pick<RuleKey, "city" | "contractType" | "coparticipation" | "productId">> {
-  ageRange: AgeRange;
-  tableId?: TableId;
-}
-
-export interface PricingLookupResult {
-  premium: number;
-  metadata: {
-    city: City;
-    contractType: ContractType;
-    coparticipation: CoparticipationType;
-    productId: string;
-    ageRange: AgeRange;
-    tableId: TableId;
-  };
-}
-
-export function getRuleErrorMessage(reasonCode?: RuleReasonCode): string {
-  switch (reasonCode) {
-    case "INVALID_BRANCH_TABLE":
-      return "A filial selecionada não permite esta tabela. Ajuste a filial ou escolha uma tabela permitida.";
-    case "INVALID_CONTRACT_FOR_TABLE":
-      return "O tipo de contrato não é compatível com a tabela selecionada.";
-    case "INVALID_PRODUCT_FOR_REGION":
-      return "Este produto não está disponível para a combinação de filial, tabela e contrato selecionada.";
-    case "INVALID_COPAY_FOR_TABLE":
-      return "O tipo de coparticipação não é válido para esta tabela/contrato.";
-    case "INVALID_REIMBURSEMENT_FOR_PRODUCT":
-      return "O tipo de reembolso não é compatível com o produto selecionado.";
-    case "INVALID_ACCOMMODATION_FOR_PRODUCT":
-      return "A acomodação não é compatível com o produto selecionado.";
-    default:
-      return "Combinação inválida. Revise filial, contrato, coparticipação e produto.";
-  }
-}
-
-const CONTRACT_TO_TABLE: Record<ContractType, TableId> = {
-  "super-simples-1-vida": 3,
-  "super-simples-2-29-mei": 4,
-  "super-simples-2-29-demais": 5,
-  "super-simples-2-29-demais-pracas": 6,
-  "pme-30-99-adesao": 7,
-  "pme-30-99-compulsorio": 8,
-  "pme-30-99-demais-pracas": 9,
-};
-
-const TABLE_TO_CONTRACT_CATEGORY: Record<TableId, ContractCategory> = {
-  1: "PF",
-  2: "PF",
-  3: "PJ",
-  4: "PJ",
-  5: "PJ",
-  6: "PJ",
-  7: "PJ",
-  8: "PJ",
-  9: "PJ",
-};
-
-const BRANCH_TABLE_RULES: Record<City, TableId[]> = {
-  "sao-paulo": [1, 2, 3, 4, 5, 7, 8],
-  "campinas": [1, 2, 3, 6, 9],
-  "jundiai": [1, 2, 3, 6, 9],
-  "mogi-das-cruzes": [1, 2, 3, 4, 5, 7, 8],
-  "santos": [1, 2, 3, 4, 5, 7, 8],
-  "sao-bernardo": [1, 2, 3, 4, 5, 7, 8],
-  "sorocaba": [1, 2, 3, 6, 9],
-  "americana": [1, 2, 3, 6, 9],
-  "sao-jose-dos-campos": [6, 9],
-  "rio-de-janeiro": [1, 2, 3, 6, 9],
-};
-
-function contractTypeFromTable(tableId: TableId): ContractType[] {
-  return (Object.keys(CONTRACT_TO_TABLE) as ContractType[]).filter(
-    (contractType) => CONTRACT_TO_TABLE[contractType] === tableId
-  );
-}
-
-function toAccommodationOption(product: Product): AccommodationOption {
-  return product.accommodation === "APART" ? "APARTAMENTO" : "ENFERMARIA";
-}
-
-function getProductById(productId: string): Product | undefined {
-  return PRODUCTS.find((p) => p.id === productId);
-}
-
-function dedupe<T>(values: T[]): T[] {
-  return [...new Set(values)];
-}
-
-export function getAllowedOptions(selection: RuleKey): AllowedOptions {
-  const allowedTableIds = selection.city ? BRANCH_TABLE_RULES[selection.city] : ([1, 2, 3, 4, 5, 6, 7, 8, 9] as TableId[]);
-
-  const contractTypesFromPrices = selection.city
-    ? (Object.keys(PRICES[selection.city] ?? {}) as ContractType[])
-    : CONTRACT_TYPES.map((ct) => ct.id);
-
-  const contractTypesFromTables = allowedTableIds.flatMap(contractTypeFromTable);
-  const allowedContractTypes = contractTypesFromPrices.filter((ct) =>
-    contractTypesFromTables.includes(ct)
-  );
-
-  const allowedCoparticipations: CoparticipationType[] =
-    selection.city && selection.contractType
-      ? (Object.keys(PRICES[selection.city]?.[selection.contractType] ?? {}) as CoparticipationType[])
-      : COPARTICIPATION_TYPES.map((c) => c.id);
-
-  const availableProductIds =
-    selection.city && selection.contractType && selection.coparticipation
-      ? Object.keys(
-          PRICES[selection.city]?.[selection.contractType]?.[selection.coparticipation] ?? {}
-        )
-      : [];
-
-  const availableProducts = availableProductIds
-    .map((id) => getProductById(id))
-    .filter((product): product is Product => Boolean(product));
-
-  const allowedReimbursements = dedupe<ReimbursementOption>([
-    "SEM",
-    ...availableProducts.flatMap((product) =>
-      product.hasReimbursement
-        ? [product.reimbursementType === "total" ? "TOTAL" : "PARCIAL"]
-        : []
-    ),
-  ]);
-
-  const allowedAccommodations = dedupe<AccommodationOption>(
-    availableProducts.map(toAccommodationOption)
-  );
-
-  return {
-    tableIds: allowedTableIds,
-    contractTypes: allowedContractTypes,
-    coparticipations: allowedCoparticipations,
-    products: availableProductIds,
-    reimbursements: allowedReimbursements,
-    accommodations: allowedAccommodations,
-  };
-}
-
-export function validateSelection(selection: RuleKey): EligibilityResult {
-  const allowedOptions = getAllowedOptions(selection);
-
-  if (selection.city && selection.tableId && !allowedOptions.tableIds.includes(selection.tableId)) {
-    return { valid: false, reasonCode: "INVALID_BRANCH_TABLE", allowedOptions };
-  }
-
-  if (selection.tableId && selection.contractCategory) {
-    if (TABLE_TO_CONTRACT_CATEGORY[selection.tableId] !== selection.contractCategory) {
-      return { valid: false, reasonCode: "INVALID_CONTRACT_FOR_TABLE", allowedOptions };
-    }
-  }
-
-  if (selection.contractType && selection.tableId) {
-    const expectedTable = CONTRACT_TO_TABLE[selection.contractType];
-    if (expectedTable !== selection.tableId) {
-      return { valid: false, reasonCode: "INVALID_CONTRACT_FOR_TABLE", allowedOptions };
-    }
-  }
-
-  if (selection.coparticipation && !allowedOptions.coparticipations.includes(selection.coparticipation)) {
-    return { valid: false, reasonCode: "INVALID_COPAY_FOR_TABLE", allowedOptions };
-  }
-
-  if (selection.productId && !allowedOptions.products.includes(selection.productId)) {
-    return { valid: false, reasonCode: "INVALID_PRODUCT_FOR_REGION", allowedOptions };
-  }
-
-  const selectedProduct = selection.productId ? getProductById(selection.productId) : undefined;
-
-  if (selection.reimbursement && selectedProduct) {
-    if (selection.reimbursement === "SEM" && selectedProduct.hasReimbursement) {
-      return {
-        valid: false,
-        reasonCode: "INVALID_REIMBURSEMENT_FOR_PRODUCT",
-        allowedOptions,
-      };
-    }
-    if (selection.reimbursement !== "SEM") {
-      if (!selectedProduct.hasReimbursement) {
-        return {
-          valid: false,
-          reasonCode: "INVALID_REIMBURSEMENT_FOR_PRODUCT",
-          allowedOptions,
-        };
-      }
-      const expected = selectedProduct.reimbursementType === "total" ? "TOTAL" : "PARCIAL";
-      if (selection.reimbursement !== expected) {
-        return {
-          valid: false,
-          reasonCode: "INVALID_REIMBURSEMENT_FOR_PRODUCT",
-          allowedOptions,
-        };
-      }
-    }
-  }
-
-  if (selection.accommodation && selectedProduct) {
-    if (selection.accommodation !== toAccommodationOption(selectedProduct)) {
-      return {
-        valid: false,
-        reasonCode: "INVALID_ACCOMMODATION_FOR_PRODUCT",
-        allowedOptions,
-      };
-    }
-  }
-
-  return { valid: true, allowedOptions };
-}
-
-export function getPricingLookup(input: PricingLookupInput): PricingLookupResult | null {
-  const tableId = input.tableId ?? CONTRACT_TO_TABLE[input.contractType];
-  const contractCategory = TABLE_TO_CONTRACT_CATEGORY[tableId];
-  const product = getProductById(input.productId);
-  const reimbursement: ReimbursementOption | undefined = product
-    ? product.hasReimbursement
-      ? product.reimbursementType === "total"
-        ? "TOTAL"
-        : "PARCIAL"
-      : "SEM"
-    : undefined;
-  const accommodation = product ? toAccommodationOption(product) : undefined;
-
-  const eligibility = validateSelection({
-    city: input.city,
-    tableId,
-    contractType: input.contractType,
-    contractCategory,
-    coparticipation: input.coparticipation,
-    productId: input.productId,
-    reimbursement,
-    accommodation,
-  });
-
-  if (!eligibility.valid) return null;
-
-  const premium = PRICES[input.city]?.[input.contractType]?.[input.coparticipation]?.[input.productId]?.[input.ageRange] ?? null;
-  if (premium == null) return null;
-
-  return {
-    premium,
-    metadata: {
-      city: input.city,
-      contractType: input.contractType,
-      coparticipation: input.coparticipation,
-      productId: input.productId,
-      ageRange: input.ageRange,
-      tableId,
-    },
-  };
-}
-
 export function getPrice(
   city: City,
   contractType: ContractType,
@@ -6341,15 +6011,19 @@ export function getPrice(
   productId: string,
   ageRange: AgeRange
 ): number | null {
-  return (
-    getPricingLookup({
-      city,
-      contractType,
-      coparticipation: coparticipationType,
-      productId,
-      ageRange,
-    })?.premium ?? null
-  );
+  const cityPrices = PRICES[city];
+  if (!cityPrices) return null;
+  
+  const contractPrices = cityPrices[contractType];
+  if (!contractPrices) return null;
+  
+  const copartPrices = contractPrices[coparticipationType];
+  if (!copartPrices) return null;
+  
+  const productPrices = copartPrices[productId];
+  if (!productPrices) return null;
+  
+  return productPrices[ageRange] ?? null;
 }
 
 // Função para obter preço de um produto
@@ -6360,7 +6034,19 @@ export function getProductPrice(
   productId: string,
   ageRange: AgeRange
 ): number | null {
-  return getPrice(city, contractType, coparticipation, productId, ageRange);
+  const cityData = PRICES[city];
+  if (!cityData) return null;
+  
+  const contractData = cityData[contractType];
+  if (!contractData) return null;
+  
+  const copartData = contractData[coparticipation];
+  if (!copartData) return null;
+  
+  const productData = copartData[productId];
+  if (!productData) return null;
+  
+  return productData[ageRange] ?? null;
 }
 
 // Função para calcular total de uma simulação
@@ -6392,13 +6078,15 @@ export function getAvailableProducts(
   contractType: ContractType,
   coparticipation: CoparticipationType
 ): Product[] {
-  const eligibility = validateSelection({
-    city,
-    contractType,
-    tableId: CONTRACT_TO_TABLE[contractType],
-    contractCategory: "PJ",
-    coparticipation,
-  });
-  if (!eligibility.valid) return [];
-  return PRODUCTS.filter((p) => eligibility.allowedOptions.products.includes(p.id));
+  const cityData = PRICES[city];
+  if (!cityData) return [];
+  
+  const contractData = cityData[contractType];
+  if (!contractData) return [];
+  
+  const copartData = contractData[coparticipation];
+  if (!copartData) return [];
+  
+  const availableIds = Object.keys(copartData);
+  return PRODUCTS.filter(p => availableIds.includes(p.id));
 }

@@ -25,8 +25,6 @@ import {
   AGE_RANGE_LABELS,
   AgeRange,
   getProductPrice,
-  getRuleErrorMessage,
-  validateSelection,
 } from "@/data/hapvida-prices";
 import { useColors } from "@/hooks/use-colors";
 import { HAPVIDA_LOGO_B64, REDE_HOSPITAIS_B64 } from "@/data/pdf-images";
@@ -142,14 +140,6 @@ export default function SimulationScreen() {
   const selectedCopart = COPARTICIPATION_TYPES.find(
     (c) => c.id === state.coparticipation
   );
-  const selectionValidation =
-    state.city && state.contractType && state.coparticipation
-      ? validateSelection({
-          city: state.city,
-          contractType: state.contractType,
-          coparticipation: state.coparticipation,
-        })
-      : null;
 
   // Carregar simulações salvas e dados do corretor
   useEffect(() => {
@@ -251,17 +241,6 @@ export default function SimulationScreen() {
 
   // Abrir modal com quantidades zeradas
   const handleAddLife = (ageRange: AgeRange, type: LiveType) => {
-    if (selectionValidation && !selectionValidation.valid) {
-      Alert.alert("Combinação inválida", getRuleErrorMessage(selectionValidation.reasonCode));
-      return;
-    }
-    if (availableProducts.length === 0) {
-      Alert.alert(
-        "Sem produtos disponíveis",
-        "Não há produtos para esta combinação. Revise filial, tipo de contrato e coparticipação."
-      );
-      return;
-    }
     setPendingEntry({ type, ageRange });
     // Inicializar quantidades zeradas para todos os produtos
     setProductQuantities(availableProducts.map(p => ({ productId: p.id, quantity: 0 })));
@@ -842,14 +821,6 @@ export default function SimulationScreen() {
               </View>
             )}
           </View>
-
-          {selectionValidation && !selectionValidation.valid && (
-            <View className="bg-error/10 border border-error/30 rounded-lg p-3 mb-4">
-              <Text className="text-error text-xs">
-                {getRuleErrorMessage(selectionValidation.reasonCode)}
-              </Text>
-            </View>
-          )}
         </View>
 
         {/* Distribuição de Vidas com Titular/Dependente */}
