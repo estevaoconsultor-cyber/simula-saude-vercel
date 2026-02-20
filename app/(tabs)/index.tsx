@@ -1,15 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { ScrollView, Text, View, TouchableOpacity, Image, Platform, StyleSheet, Linking } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScreenContainer } from "@/components/screen-container";
 import { useSimulation } from "@/contexts/SimulationContext";
 import { CITIES } from "@/data/hapvida-prices";
 import { useColors } from "@/hooks/use-colors";
 import { useUser } from "@/contexts/UserContext";
-
-const STORAGE_KEY = "@simulasaude_form_done";
-const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSe2WH9EzLWYRfTYYFBKaF1J7F6eX9MLE4HB8nHeAyrtj4uILw/viewform?embedded=true";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -17,8 +13,7 @@ export default function HomeScreen() {
   const colors = useColors();
   const { isRegistered } = useUser();
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [loading] = useState(false);
 
   // Redirecionar para cadastro se não registrado
   useEffect(() => {
@@ -26,20 +21,6 @@ export default function HomeScreen() {
       router.replace("/register" as any);
     }
   }, [isRegistered]);
-
-  useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((data) => {
-      if (data) {
-        setShowForm(false);
-      }
-      setLoading(false);
-    });
-  }, []);
-
-  const handleFormDone = async () => {
-    await AsyncStorage.setItem(STORAGE_KEY, "true");
-    setShowForm(false);
-  };
 
   const handleCitySelect = (cityId: string) => {
     dispatch({ type: "SET_CITY", payload: cityId as any });
@@ -51,74 +32,6 @@ export default function HomeScreen() {
   };
 
   if (loading) return null;
-
-  if (showForm) {
-    return (
-      <ScreenContainer>
-        <View style={{ flex: 1 }}>
-          {/* Header */}
-          <View style={styles.formHeader}>
-            <Image
-              source={require("@/assets/assets/images/icon.96ff965fc2f200e0a4d0f6b3836a1ca7.png")}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <Text style={[styles.formTitle, { color: colors.foreground }]}>
-              Simula Saúde
-            </Text>
-            <Text style={[styles.formSubtitle, { color: colors.muted }]}>
-              Preencha o cadastro para acessar o simulador
-            </Text>
-          </View>
-
-          {/* Google Form iframe (web) */}
-          {Platform.OS === "web" ? (
-            <View style={{ flex: 1, marginHorizontal: 16 }}>
-              <iframe
-                src={GOOGLE_FORM_URL}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  border: "none",
-                  borderRadius: 12,
-                  minHeight: 500,
-                } as any}
-                frameBorder="0"
-                marginHeight={0}
-                marginWidth={0}
-              >
-                Carregando…
-              </iframe>
-            </View>
-          ) : (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-              <TouchableOpacity
-                onPress={() => Linking.openURL(GOOGLE_FORM_URL.replace("?embedded=true", ""))}
-                style={[styles.submitButton, { backgroundColor: colors.primary }]}
-              >
-                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
-                  Abrir Formulário de Cadastro
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Botão para prosseguir após preencher */}
-          <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 12 }}>
-            <TouchableOpacity
-              onPress={handleFormDone}
-              activeOpacity={0.85}
-              style={[styles.submitButton, { backgroundColor: colors.primary }]}
-            >
-              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
-                Já preenchi → Acessar Simulador
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScreenContainer>
-    );
-  }
 
   return (
     <ScreenContainer>
