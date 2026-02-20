@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScrollView, Text, View, TouchableOpacity } from "react-native";
+import { Alert, ScrollView, Text, View, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useSimulation } from "@/contexts/SimulationContext";
@@ -8,6 +8,9 @@ import {
   CITIES,
   CONTRACT_TYPES,
   CoparticipationType,
+  getAllowedOptions,
+  getRuleErrorMessage,
+  validateSelection,
 } from "@/data/hapvida-prices";
 
 // Documentações por tipo de contrato
@@ -95,8 +98,22 @@ export default function CoparticipationScreen() {
   const selectedCity = CITIES.find((c) => c.id === state.city);
   const selectedContract = CONTRACT_TYPES.find((c) => c.id === state.contractType);
   const docs = state.contractType ? DOCUMENTATIONS[state.contractType] : null;
+  const allowedCoparts =
+    state.city && state.contractType
+      ? getAllowedOptions({ city: state.city, contractType: state.contractType }).coparticipations
+      : [];
 
   const handleSelect = (coparticipation: CoparticipationType) => {
+    if (!state.city || !state.contractType) return;
+    const result = validateSelection({
+      city: state.city,
+      contractType: state.contractType,
+      coparticipation,
+    });
+    if (!result.valid) {
+      Alert.alert("Combinação inválida", getRuleErrorMessage(result.reasonCode));
+      return;
+    }
     dispatch({ type: "SET_COPARTICIPATION", payload: coparticipation });
     router.push("/simulation" as any);
   };
@@ -137,12 +154,15 @@ export default function CoparticipationScreen() {
 
         {/* Opções de Coparticipação */}
         <View className="gap-4">
-          {COPARTICIPATION_TYPES.map((copart) => (
+          {COPARTICIPATION_TYPES.map((copart) => {
+            const isAllowed = allowedCoparts.includes(copart.id);
+            return (
             <TouchableOpacity
               key={copart.id}
               onPress={() => handleSelect(copart.id)}
+              disabled={!isAllowed}
               className="bg-surface rounded-xl p-4 border border-border active:opacity-70"
-              style={{ opacity: 1 }}
+              style={{ opacity: isAllowed ? 1 : 0.45 }}
             >
               <View className="flex-row items-center justify-between">
                 <View className="flex-1 pr-4">
@@ -156,8 +176,17 @@ export default function CoparticipationScreen() {
                 <Text className="text-xl text-muted">›</Text>
               </View>
             </TouchableOpacity>
-          ))}
+          )})}
         </View>
+
+        {allowedCoparts.length === 0 && (
+          <View className="bg-error/10 border border-error/30 rounded-xl p-4 mt-4">
+            <Text className="text-error text-sm">
+              Não há coparticipação válida para esta combinação de filial e contrato.
+              Volte e ajuste a seleção para continuar.
+            </Text>
+          </View>
+        )}
 
         {/* Documentações */}
         {docs && (

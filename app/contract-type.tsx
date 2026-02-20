@@ -2,7 +2,7 @@ import { ScrollView, Text, View, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useSimulation } from "@/contexts/SimulationContext";
-import { CONTRACT_TYPES, CITIES, PRICES, ContractType } from "@/data/hapvida-prices";
+import { CONTRACT_TYPES, CITIES, ContractType, getAllowedOptions } from "@/data/hapvida-prices";
 
 export default function ContractTypeScreen() {
   const router = useRouter();
@@ -11,11 +11,8 @@ export default function ContractTypeScreen() {
   const selectedCity = CITIES.find((c) => c.id === state.city);
 
   // Filtrar tipos de contrato disponíveis para a cidade selecionada
-  const availableTypes = CONTRACT_TYPES.filter((ct) => {
-    if (!state.city) return false;
-    const cityPrices = PRICES[state.city];
-    return cityPrices && ct.id in cityPrices;
-  });
+  const allowedContractTypes = state.city ? getAllowedOptions({ city: state.city }).contractTypes : [];
+  const availableTypes = CONTRACT_TYPES.filter((ct) => allowedContractTypes.includes(ct.id));
 
   const handleSelect = (contractType: ContractType) => {
     dispatch({ type: "SET_CONTRACT_TYPE", payload: contractType });
