@@ -1,8 +1,7 @@
 {
   "name": "simula-saude",
   "version": "1.0.0",
-  "private": true
-},
+  "private": true,
   "main": "expo-router/entry",
   "scripts": {
     "dev": "concurrently -k \"pnpm dev:server\" \"pnpm dev:metro\"",
