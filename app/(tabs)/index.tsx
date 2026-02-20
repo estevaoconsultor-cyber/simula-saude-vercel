@@ -59,7 +59,7 @@ export default function HomeScreen() {
           {/* Header */}
           <View style={styles.formHeader}>
             <Image
-              source={require("@/assets/images/icon.png")}
+              source={require("@/assets/assets/images/icon.96ff965fc2f200e0a4d0f6b3836a1ca7.png")}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -129,7 +129,7 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Image
-            source={require("@/assets/images/icon.png")}
+            source={require("@/assets/assets/images/icon.96ff965fc2f200e0a4d0f6b3836a1ca7.png")}
             style={styles.logoSmall}
             resizeMode="contain"
           />

@@ -14,7 +14,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useUser } from "@/contexts/UserContext";
 
 // @ts-ignore
-const logoIcon = require("@/assets/images/icon.png");
+const logoIcon = require("@/assets/assets/images/icon.96ff965fc2f200e0a4d0f6b3836a1ca7.png");
 
 export default function RegisterScreen() {
   const router = useRouter();

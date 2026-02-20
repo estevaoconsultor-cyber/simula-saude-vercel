@@ -18,7 +18,7 @@ import {
 } from "@/data/knowledge-base";
 
 // @ts-ignore
-const diellyAvatar = require("@/assets/images/dielly-avatar.jpg");
+const diellyAvatar = require("@/assets/assets/images/dielly-avatar.ca4d75c89a830693e3e1a2672e23bb23.jpg");
 
 interface Message {
   id: string;
