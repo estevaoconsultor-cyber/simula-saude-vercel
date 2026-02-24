@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { ScrollView, Text, View, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, Image, Platform, StyleSheet, Linking } from "react-native";
 import { useRouter } from "expo-router";
+
 import { ScreenContainer } from "@/components/screen-container";
 import { useSimulation } from "@/contexts/SimulationContext";
 import { CITIES } from "@/data/hapvida-prices";
 import { useColors } from "@/hooks/use-colors";
 import { useUser } from "@/contexts/UserContext";
+
+
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -13,7 +16,7 @@ export default function HomeScreen() {
   const colors = useColors();
   const { isRegistered } = useUser();
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
-  const [loading] = useState(false);
+
 
   // Redirecionar para cadastro se não registrado
   useEffect(() => {
@@ -21,6 +24,10 @@ export default function HomeScreen() {
       router.replace("/register" as any);
     }
   }, [isRegistered]);
+
+
+
+
 
   const handleCitySelect = (cityId: string) => {
     dispatch({ type: "SET_CITY", payload: cityId as any });
@@ -31,7 +38,7 @@ export default function HomeScreen() {
     setExpandedCity(expandedCity === cityId ? null : cityId);
   };
 
-  if (loading) return null;
+
 
   return (
     <ScreenContainer>
@@ -42,7 +49,7 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Image
-            source={require("@/assets/assets/images/icon.96ff965fc2f200e0a4d0f6b3836a1ca7.png")}
+            source={require("@/assets/images/icon.png")}
             style={styles.logoSmall}
             resizeMode="contain"
           />
@@ -170,7 +177,7 @@ export default function HomeScreen() {
 
         <View style={styles.footer}>
           <Text style={{ fontSize: 11, color: colors.muted }}>
-            SimulaSaúde v2.0.5 • Build 20260211
+            SimulaSaúde v2.0.6 • Build 20260222
           </Text>
         </View>
       </ScrollView>
@@ -235,7 +242,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    marginTop: 6,
     marginBottom: 12,
   },
   cityCard: {
@@ -277,10 +283,8 @@ const styles = StyleSheet.create({
   },
   quizCard: {
     borderRadius: 12,
-    paddingVertical: 18,
-    paddingHorizontal: 16,
-    marginTop: 20,
-    marginBottom: 16,
+    padding: 16,
+    marginBottom: 20,
     borderWidth: 1,
   },
   infoFooter: {
