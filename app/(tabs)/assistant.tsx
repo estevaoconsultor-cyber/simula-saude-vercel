@@ -12,7 +12,6 @@ import {
 import { ScreenContainer } from "@/components/screen-container";
 import {
   searchKnowledge,
-  generateDiellyResponse,
   SUGGESTED_QUESTIONS,
   KnowledgeEntry,
 } from "@/data/knowledge-base";
