@@ -63,8 +63,9 @@ export default function AssistantScreen() {
     setMessages([welcomeMsg]);
   }, []);
 
-  const sendMessage = useCallback(
+const sendMessage = useCallback(
   async (text: string, existingMessages?: Message[]) => {
+    try {
       const query = text.trim();
       if (!query) return;
 
@@ -76,44 +77,44 @@ export default function AssistantScreen() {
       };
 
       const base = existingMessages || messages;
+
       setMessages([...base, userMsg]);
       setInputText("");
       setIsTyping(true);
       scrollToBottom();
 
-      const results = searchKnowledge(query, 3);
+      let responseText = "Desculpe, não consegui responder agora.";
 
-let responseText = "";
+      try {
+        responseText = await askDielly(
+          query,
+          base.map(m => ({
+            role: m.type === "user" ? "user" : "assistant",
+            content: m.text
+          }))
+        );
+      } catch (apiError) {
+        console.error("Erro askDielly:", apiError);
+      }
 
-try {
-  responseText = await askDielly(
-    query,
-    base.map(m => ({
-      role: m.type === "user" ? "user" : "assistant",
-      content: m.text
-    }))
-  );
-} catch (error) {
-  responseText = "Desculpe, tive um problema ao responder agora.";
-}
+      const diellyMsg: Message = {
+        id: `dielly-${Date.now()}`,
+        type: "dielly",
+        text: responseText,
+        timestamp: new Date(),
+      };
 
-const typingDelay = Math.min(300 + responseText.length * 10, 1500);
+      setMessages(prev => [...prev, diellyMsg]);
+      setIsTyping(false);
+      scrollToBottom();
 
-      setTimeout(() => {
-        const diellyMsg: Message = {
-          id: `dielly-${Date.now()}`,
-          type: "dielly",
-          text: responseText,
-          timestamp: new Date(),
-          relatedEntries: results.length > 1 ? results.slice(1) : undefined,
-        };
-        setMessages((prev) => [...prev, diellyMsg]);
-        setIsTyping(false);
-        scrollToBottom();
-      }, typingDelay);
-    },
-    [messages, scrollToBottom]
-  );
+    } catch (error) {
+      console.error("Erro geral:", error);
+      setIsTyping(false);
+    }
+  },
+  [messages, scrollToBottom]
+);
 
   const handleSend = useCallback(
     (text?: string) => {
