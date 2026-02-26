@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { askDielly } from "@/data/gemini-service";
 import {
   ScrollView,
   Text,
