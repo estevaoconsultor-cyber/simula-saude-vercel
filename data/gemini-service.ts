@@ -1,7 +1,8 @@
 // data/gemini-service.ts
 
 // Usa variável de ambiente configurada no Vercel
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+const GEMINI_API_KEY =
+  process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
 
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
@@ -22,9 +23,10 @@ export async function askDielly(
   userMessage: string,
   history: ChatMessage[] = []
 ): Promise<string> {
-  if (!GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY não configurada.");
-  }
+if (!GEMINI_API_KEY) {
+  console.error("GEMINI_API_KEY não configurada");
+  return "Assistente temporariamente indisponível.";
+}
 
   try {
     // Converte histórico para formato do Gemini
