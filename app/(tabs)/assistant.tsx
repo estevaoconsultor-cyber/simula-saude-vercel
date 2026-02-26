@@ -65,7 +65,7 @@ export default function AssistantScreen() {
   }, []);
 
   const sendMessage = useCallback(
-    (text: string, existingMessages?: Message[]) => {
+  async (text: string, existingMessages?: Message[]) => {
       const query = text.trim();
       if (!query) return;
 
@@ -83,8 +83,22 @@ export default function AssistantScreen() {
       scrollToBottom();
 
       const results = searchKnowledge(query, 3);
-      const responseText = generateDiellyResponse(query, results);
-      const typingDelay = Math.min(300 + responseText.length * 2, 1500);
+
+let responseText = "";
+
+try {
+  responseText = await askDielly(
+    query,
+    base.map(m => ({
+      role: m.type === "user" ? "user" : "assistant",
+      content: m.text
+    }))
+  );
+} catch (error) {
+  responseText = "Desculpe, tive um problema ao responder agora.";
+}
+
+const typingDelay = Math.min(300 + responseText.length * 10, 1500);
 
       setTimeout(() => {
         const diellyMsg: Message = {
