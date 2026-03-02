@@ -96,4 +96,3 @@ return text;
 console.error(“Erro ao consultar Gemini:”, error);
 return “Desculpe, tive um problema para processar sua pergunta. Tente novamente em instantes!”;
 }
-}
