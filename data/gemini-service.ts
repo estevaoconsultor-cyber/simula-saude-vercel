@@ -1,7 +1,7 @@
 const GEMINI_API_KEY = "AIzaSyADzhoefLXmbYSffjUxj3ARD6dP67uK3_o";
 
 const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash";
 
 type ChatMessage = {
   role: "user" | "assistant";
