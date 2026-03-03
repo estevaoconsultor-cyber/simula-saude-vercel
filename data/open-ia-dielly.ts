@@ -1,4 +1,4 @@
-const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY || "";
+const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY || '''';
 
 const SYSTEM_PROMPT = `Você é a Dielly, assistente virtual especializada nos planos de saúde Hapvida para vendedores da equipe Hapvida SP.
 
