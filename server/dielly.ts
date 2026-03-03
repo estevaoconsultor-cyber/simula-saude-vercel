@@ -159,8 +159,51 @@ export async function chatWithDielly(
   userMessage: string,
   history: ChatMessage[] = []
 ): Promise<string> {
-  // Usar apenas base de conhecimento local sem chamar LLM externo
-  return fallbackResponse(userMessage);
+  const systemPrompt = buildSystemPrompt();
+  const priceContext = buildPriceContext(userMessage);
+  const relevantContext = buildRelevantContext(userMessage);
+
+  const messages: Message[] = [
+    {
+      role: "system",
+      content: systemPrompt + priceContext + relevantContext,
+    },
+  ];
+
+  const recentHistory = history.slice(-10);
+  for (const msg of recentHistory) {
+    messages.push({
+      role: msg.role === "user" ? "user" : "assistant",
+      content: msg.content,
+    });
+  }
+
+  messages.push({
+    role: "user",
+    content: userMessage,
+  });
+
+  try {
+    const result = await invokeLLM({
+      messages,
+      maxTokens: 4096,
+    });
+
+    const content = result.choices?.[0]?.message?.content;
+    if (typeof content === "string") {
+      return content;
+    }
+    if (Array.isArray(content)) {
+      return content
+        .filter((c): c is { type: "text"; text: string } => c.type === "text")
+        .map((c) => c.text)
+        .join("\n");
+    }
+    return "Desculpe, nao consegui processar sua pergunta. Tente reformular!";
+  } catch (error: any) {
+    console.error("[Dielly] LLM error:", error.message);
+    return fallbackResponse(userMessage);
+  }
 }
 
 // ============================================
