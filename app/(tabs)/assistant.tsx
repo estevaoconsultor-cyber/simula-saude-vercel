@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from "react";
-import { askDielly } from "@/data/gemini-service";
+import { askDielly } from "@/data/open-ia-dielly"
 import {
   ScrollView,
   Text,
