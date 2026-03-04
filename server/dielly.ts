@@ -186,7 +186,7 @@ export async function chatWithDielly(
   try {
     const result = await invokeLLM({
       messages,
-      maxTokens: 4096,
+      max_tokens: 4096,
     });
 
     const content = result.choices?.[0]?.message?.content;
