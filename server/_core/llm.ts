@@ -204,8 +204,10 @@ const normalizeToolChoice = (
 const resolveApiUrl = () => {
   // Se tiver chave OpenAI, usa OpenAI diretamente
   if (ENV.OPENAI_API_KEY && ENV.OPENAI_API_KEY.trim().length > 0) {
+    console.log("[LLM] Using OpenAI API");
     return "https://api.openai.com/v1/chat/completions";
   }
+  console.log("[LLM] OpenAI key not configured, using Manus Forge");
   // Caso contrário, usa Manus Forge
   return ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
     ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
