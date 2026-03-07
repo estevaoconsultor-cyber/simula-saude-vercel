@@ -27,20 +27,15 @@ Regras importantes:
 - Quando der argumentos de venda, seja persuasiva e motivadora
 - Nunca invente informações`;
 
-export type ChatMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
-
 export async function askDielly(
   userMessage: string,
-  conversationHistory: ChatMessage[] = []
+  conversationHistory: { role: string; content: string }[] = []
 ): Promise<string> {
   try {
     const messages = [
       { role: "system", content: SYSTEM_PROMPT },
       ...conversationHistory.map((msg) => ({
-        role: msg.role === "user" ? "user" : "assistant",
+        role: msg.role,
         content: msg.content,
       })),
       { role: "user", content: userMessage },
